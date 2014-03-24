@@ -230,10 +230,10 @@ function animate() {
 
 KEY_CODES = {
   32: 'space',
-  37: 'left',
-  38: 'up',
-  39: 'right',
-  40: 'down',
+  65: 'left',
+  87: 'up',
+  68: 'right',
+  83: 'down',
 }
 
 // Creates the array to hold the KEY_CODES and sets all their values
