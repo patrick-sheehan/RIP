@@ -9,12 +9,28 @@
 				left: 0px;
 				background: transparent;
 			}
+			#background {
+				z-index: -2;
+			}
+			#bullets {
+				z-index: -1;
+			}
+			#players {
+				z-index: 0;
+			}
 		</style>
 	</head>
 	<body onload="init()">
-		<!– The canvas for the background –>
+		<!-- The canvas for the panning background -->
 		<canvas id="background" width="1000" height="736">
 			Your browser does not support canvas. Please try again with a different browser.
+		</canvas>
+		<!-- The canvas for all enemy ships and bullets -->
+		<canvas id="bullets" width="1000" height="736">
+		</canvas>
+		<!-- The canvas the ship uses (can only move up
+         one forth the screen.) -->
+		<canvas id="players" width="1000" height="736">
 		</canvas>
 		<script src="RIP.js"></script>
 	</body>
