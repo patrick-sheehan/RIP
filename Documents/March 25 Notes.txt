@@ -1,0 +1,24 @@
+315 TA Notes 3/25
+
+Present in lab on Thursday 3/27
+Functional Prototype due Friday 3/28
+
+
+Just need to have something to implement simple gameplay
+not full game; just basic mechanics
+
+
+THREE MAIN TASKS TO ADDRESS:
+1 - serverside: need to implement basic game mechanics here. 
+    Handle messages (regarding movement etc.)
+2 - interface: elements to support basic gameplay
+3 - Communication between interface and the server
+
+someone should focus on server side
+someone should focus on interface side
+decide which messages will be sent between the interface and the server. 
+interface doesnt need to be done to test sending message to server
+
+
+***make sure hosting service allows web sockets***
+-> otherwise use cse servers
