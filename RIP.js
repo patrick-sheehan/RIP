@@ -53,7 +53,7 @@ var imageRepository = new function() {
  */
 function Drawable() {	
 	this.init = function(x, y, width, height) {
-		// Defualt variables
+		// Default variables
 		this.x = x;
 		this.y = y;
 		this.width = width;
@@ -230,10 +230,10 @@ function animate() {
 
 KEY_CODES = {
   32: 'space',
-  65: 'left',
-  87: 'up',
-  68: 'right',
-  83: 'down',
+  65: 'left(a)',
+  87: 'up(w)',
+  68: 'right(d)',
+  83: 'down(s)',
 }
 
 // Creates the array to hold the KEY_CODES and sets all their values
