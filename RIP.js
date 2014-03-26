@@ -40,9 +40,9 @@ var imageRepository = new function() {
 	//}
 
 	// Set images src
-	this.background.src = "images/grass-tiled.png";
-	this.player.src = "images/player.png";
-	//this.background.src = "images/bullet.png";
+	this.background.src = "images/backgrounds/grass-tiled.png";
+	this.player.src = "images/players/player.png";
+	//this.background.src = "images/objects/bullet.png";
 }
 
 /**
