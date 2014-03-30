@@ -4,23 +4,42 @@
 		<title>Requiescat in Pace</title>
 		<style>
 			canvas {
-				position: absolute;
-				top: 0px;
-				left: 0px;
-				background: transparent;
-			}
-			#background {
-				z-index: -2;
-			}
-			#bullets {
-				z-index: -1;
-			}
-			#players {
-				z-index: 0;
-			}
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 10%;
+                padding-left: 0;
+                padding-right: 0;
+                margin-left: auto;
+                margin-right: auto;
+                display: block;
+                width: 800px;
+                background: transparent;
+            }
+        #background {
+            z-index: -2;
+        }
+        #bullets {
+            z-index: -1;
+        }
+        #players {
+            z-index: 0;
+        }
 		</style>
+        <link rel="stylesheet" type="text/css" href="style_2.css">
 	</head>
 	<body onload="init()">
+        <img alt = "full screen bg img" src = "background.jpg" id = "full-screen-background-image"/>
+        <div style="position: relative">
+            <font color = white>
+            <h1 style="position: fixed; top: 0; width:100%; text-align: center"> <strong> Requiescat In Pace </strong> </h1>
+        </div>
+        <form action="">
+            <input type="button" value="Donate!!!">
+                </form>
+        <div style="position: relative">
+            <p style="position: fixed; bottom: 0; width:100%; text-align: center"> Credits: The awesome group of CSCE 315 containing the members Patrick, Waylon, Eliut, and Garrett</p>
+        </div>
 		<!-- The canvas for the panning background -->
 		<canvas id="background" width="1000" height="736">
 			Your browser does not support canvas. Please try again with a different browser.
@@ -33,5 +52,6 @@
 		<canvas id="players" width="1000" height="736">
 		</canvas>
 		<script src="RIP.js"></script>
+        </font>
 	</body>
 </html>
