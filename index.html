@@ -111,16 +111,32 @@
         -->
 	</head>
 	<body onload="init()">
-	      <font color = white>
+        <font color = white>
+        <div style="position: relative">
+            <p style = "position: fixed; right: 100px"> <strong>Song Of The Day!</strong></p>
+        </div>
+        <div>
+            <p>
+            <br><br>
+        <video controls autoplay width="300" height="200" style = "position: fixed; right: 5px">
+            <source src="song_of_the_day.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+        </video>
+        <div style="position: relative">
+            <p style = "position: fixed; top: 275px; right: 75px"> <strong>Our Video! (Pending)</strong></p>
+        </div>
+        </p>
+        </div>
 	      <img alt = "full screen bg img" src = "images/backgrounds/pagebackground.jpg" id = "full-screen-background-image"/>
 	      <img alt = "preloadbackground" src = "images/backgrounds/grass-tiled.png" id = "preloadBackground" width="0" height="0"/>
 	      <img alt = "preloadplayer" src = "images/players/player_1.png" id = "preloadPlayer" width="0" height="0"/>
 	      <img alt = "preloadbullet" src = "images/objects/bullet.png" id = "preloadBullet" width="0" height="0"/>
 	      <img alt = "preloadpowerup" src = "images/effects/bulletPowerup.png" id = "preloadBulletPowerup" width="0" height="0"/>
-	      <div style="position: relative">
+	     <!-- <div style="position: relative">
 	          <h1 style="position: fixed; width:100%; text-align: center"> <strong> Requiescat In Pace </strong> </h1>
 	          <p style = "text-align: center"> Prototype 1 </p>
 	      </div>
+          -->
 	      <form action="" style = "position: fixed; top: 0; width: 100% text-align: center"   >
 	          <input type="button" value="Donate!!! (JK)">
 	      </form>
