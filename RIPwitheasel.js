@@ -35,49 +35,60 @@ function init()
 
 function tick(event)
 {
+	movePlayer();
+	rotatePlayer();
+
+	stage.update();
+}
+
+function Player()
+{
+	this.image = new createjs.Bitmap("images/player.png");
+	this.image.x = Math.random()*canvas.width;
+	this.image.y = Math.random()*canvas.height;
+	//set registration points to center of image
+	this.image.regX = 50;
+	this.image.regY = 50;
+	stage.addChild(this.image);
+}
+
+function movePlayer()
+{
 	//doing each combination, as if you detect them separately then the player moves sqrt(2) as fast on diagonals
 	if(upPressed && leftPressed)
 	{
-		console.log("left and up");
 		player.image.y -= movementSpeed / 1.4;
 		player.image.x -= movementSpeed / 1.4;
 	}
 	else if(upPressed && rightPressed)
 	{
-		console.log("right and up");
 		player.image.y -= movementSpeed / 1.4;
 		player.image.x += movementSpeed / 1.4;
 	}
 	else if(rightPressed && downPressed)
 	{
-		console.log("right and down");
 		player.image.x += movementSpeed / 1.4;
 		player.image.y += movementSpeed / 1.4;
 	}
 	else if(leftPressed && downPressed)
 	{
-		console.log("left and down");
 		player.image.x -= movementSpeed / 1.4;
 		player.image.y += movementSpeed / 1.4;
 	}
 	else if(upPressed)
 	{
-		console.log("up");
 		player.image.y -= movementSpeed;
 	}
 	else if(downPressed)
 	{
-		console.log("down");
 		player.image.y += movementSpeed;
 	}
 	else if(leftPressed)
 	{
-		console.log("left");
 		player.image.x -= movementSpeed;
 	}
 	else if(rightPressed)
 	{
-		console.log("right");
 		player.image.x += movementSpeed;
 	}
 
@@ -89,26 +100,22 @@ function tick(event)
 	{
 		player.image.y = 0;
 	}
-	if((player.image.x + 100) > canvas.width)
+	if(player.image.x  > canvas.width)
 	{
-		player.image.x = canvas.width - 100;
+		player.image.x = canvas.width;
 	}
-	if((player.image.y + 100) > canvas.height)
+	if(player.image.y > canvas.height)
 	{
-		player.image.y = canvas.height - 100;
+		player.image.y = canvas.height;
 	}
-
-
-
-	stage.update();
 }
 
-function Player()
+function rotatePlayer()
 {
-	this.image = new createjs.Bitmap("images/players/player_up.png");
-	this.image.x = Math.random()*canvas.width;
-	this.image.y = Math.random()*canvas.height;
-	stage.addChild(this.image);
+	var mouseX = stage.mouseX;
+	var mouseY = stage.mouseY;
+	var rotationAngle = Math.atan2(mouseY - player.image.y, mouseX - player.image.x);
+	player.image.rotation = rotationAngle * (180/Math.PI);
 }
 
 //allow for WASD and arrow control scheme
