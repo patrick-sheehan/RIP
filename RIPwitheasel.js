@@ -89,10 +89,13 @@ function tick(event)
 	{
 		player.image.y = 0;
 	}
-	console.log("player.image.x: " + player.image.x + " player.image.width: " + player.image.width + " canvas.width: " + canvas.width);
-	if((player.image.x + player.image.width) > canvas.width)
+	if((player.image.x + 100) > canvas.width)
 	{
-		player.image.x = canvas.width + player.image.width;
+		player.image.x = canvas.width - 100;
+	}
+	if((player.image.y + 100) > canvas.height)
+	{
+		player.image.y = canvas.height - 100;
 	}
 
 
