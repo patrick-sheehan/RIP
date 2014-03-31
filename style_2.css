@@ -23,3 +23,13 @@ html, body {
   margin: 100px auto;
   color: #333;
 }
+
+#gameCanvas
+{
+	cursor: pointer;
+}
+
+#gameCanvas:active
+{
+	cursor: crosshair;
+}
