@@ -15,11 +15,20 @@ var rightPressed;
 var mousePressed = false;
 
 var movementSpeed = 5;
-var bulletFireRate = 20;	//higher the rate, slower bullet shoots
+var currentBulletFireRate = 20;	//higher the rate, slower bullet shoots
+var BULLET_FIRERATE_NORMAL = 20;
+var BULLET_FIREREATE_POWERUP = 5;
 var bulletFrameCounter = 0;
 var bulletSpeed = 15;
 
 var bulletArray = [];
+var powerupExists = false;
+var powerup;			//object
+var playerPowerupTime = 0;	//time counter (in ticks) that player can have powerup
+var MAX_POWERUP_TIME = 500;	//set time that player gets it
+var removePlayerPowerup = false;	//so that on each tick it doesn't change image back
+var POWERUP_ODDS = 500;	// "1/this" chance of powerup per tick
+
 
 document.onkeydown = handleKeyDown;
 document.onkeyup = handleKeyUp;
@@ -48,6 +57,8 @@ function tick(event)
 	if(mousePressed)
 		playerShoot();
 	moveBullets();
+	determinePowerup();
+	checkPowerupCollision();
 	stage.update();
 }
 
@@ -65,6 +76,8 @@ function Player()
 function Bullet()
 {
 	this.image = new createjs.Bitmap("images/bullet.png");
+	this.image.regX = 2;
+	this.image.regY = 2;
 	this.image.x = player.image.x;
 	this.image.y = player.image.y;
 	this.initialX = this.image.x;
@@ -76,6 +89,17 @@ function Bullet()
 	this.angle = (Math.atan2(mouseY - this.image.y, mouseX - this.image.x)* (180/Math.PI)) - 90;
 
 	console.log("bullet count: " + bulletArray.length);
+	stage.addChild(this.image);
+}
+
+function Powerup()
+{
+	this.image = new createjs.Bitmap("images/bulletPowerup.png");
+	this.image.regX = 23;
+	this.image.regY = 23;
+	this.image.x = canvas.width / 2;
+	this.image.y = canvas.height / 2;
+
 	stage.addChild(this.image);
 }
 
@@ -145,11 +169,14 @@ function moveBullets()
 		bulletArray[i].image.y += Math.cos(bulletArray[i].angle*(Math.PI/-180)) * bulletSpeed;
 		bulletArray[i].initialX = bulletArray[i].image.x;
 		bulletArray[i].initialY = bulletArray[i].image.y;
+
+		//TODO: this is to prevent memory leak with bullets travelling off the canvas indefinitely, currently causes bug where
+		//bullet completely stops
 		if(bulletArray[i].image.x < 0 || bulletArray[i].image.x > canvas.width || bulletArray[i].image.y < 0 || bulletArray[i].image.y > canvas.height)
 		{
 			var thisBullet = bulletArray[i];
-			bulletArray = bulletArray.slice(i);
-			delete thisBullet;
+			//delete thisBullet;
+			//bulletArray = bulletArray.slice(i);
 		}
 	}
 
@@ -171,9 +198,68 @@ function playerShoot()
 		bulletArray.push(bullet);
 	}
 	bulletFrameCounter++;
-	if(bulletFrameCounter > bulletFireRate)
+	if(bulletFrameCounter > currentBulletFireRate)
 	{
 		bulletFrameCounter = 0;
+	}
+}
+
+function determinePowerup()
+{
+	//1/2000 chance per tick for powerup
+	if(!powerupExists && (Math.floor(Math.random()*POWERUP_ODDS) == 0))
+	{
+		powerupExists = true;
+		powerup = new Powerup();
+	}
+
+	if(playerPowerupTime > 0)
+	{
+		playerPowerupTime --;
+	}
+	else if (removePlayerPowerup)		//player powerup time is over
+	{
+		var originalX = player.image.x;
+		var originalY = player.image.y;
+
+		removePlayerPowerup = false;
+		stage.removeChild(player.image);
+		player.image = new createjs.Bitmap("images/player.png");
+		player.image.regX = 50;
+		player.image.regY = 50;
+		player.image.x = originalX;
+		player.image.y = originalY;
+		stage.addChild(player.image);
+
+		currentBulletFireRate = BULLET_FIRERATE_NORMAL;
+	}
+}
+
+function checkPowerupCollision()
+{
+	var threshhold = 30; 	//# of pixels from center of player to powerup boundaries
+	if(powerupExists && playerPowerupTime == 0)
+	{
+		if((player.image.x + threshhold) > (powerup.image.x - 23) && (player.image.x - threshhold) < (powerup.image.x + 23)
+			&& (player.image.y + threshhold) > (powerup.image.y - 23) && (player.image.y - threshhold) < (powerup.image.y + 23))
+		{
+			var originalX = player.image.x;
+			var originalY = player.image.y;
+
+			stage.removeChild(player.image);
+			player.image = new createjs.Bitmap("images/playerWithPowerup.png");
+			player.image.regX = 50;
+			player.image.regY = 50;
+			player.image.x = originalX;
+			player.image.y = originalY;
+			stage.addChild(player.image);
+			stage.removeChild(powerup.image);
+
+			powerupExists = false;
+			removePlayerPowerup = true;
+			playerPowerupTime = MAX_POWERUP_TIME;
+			currentBulletFireRate = BULLET_FIREREATE_POWERUP;
+		}
 	}
 }
 
