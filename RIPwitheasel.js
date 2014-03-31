@@ -1,5 +1,7 @@
 var stage;
 var player;
+var background;
+var canvas;
 
 var upKey = 87;
 var downKey = 83;
@@ -11,19 +13,21 @@ var downPressed;
 var leftPressed;
 var rightPressed;
 
+var movementSpeed = 5;
+
 document.onkeydown = handleKeyDown;
 document.onkeyup = handleKeyUp;
 
 function init()
 {
-	var canvas = document.getElementById("gameCanvas");
+	canvas = document.getElementById("gameCanvas");
 	stage = new createjs.Stage(canvas);
 
-	var background = new createjs.Bitmap("images/backgrounds/grass-tiled.png");
+	background = new createjs.Bitmap("images/backgrounds/grass-tiled.png");
 	stage.addChild(background);
 
 	createjs.Ticker.setFPS(60);
-
+	createjs.Ticker.addEventListener("tick", tick);
 	player = new Player();
 
 	stage.update();
@@ -31,31 +35,77 @@ function init()
 
 function tick(event)
 {
-	if(upPressed || downPressed || leftPressed || rightPressed)
+	//doing each combination, as if you detect them separately then the player moves sqrt(2) as fast on diagonals
+	if(upPressed && leftPressed)
 	{
-		console.log("test");
-		player.move();
+		console.log("left and up");
+		player.image.y -= movementSpeed / 1.4;
+		player.image.x -= movementSpeed / 1.4;
 	}
+	else if(upPressed && rightPressed)
+	{
+		console.log("right and up");
+		player.image.y -= movementSpeed / 1.4;
+		player.image.x += movementSpeed / 1.4;
+	}
+	else if(rightPressed && downPressed)
+	{
+		console.log("right and down");
+		player.image.x += movementSpeed / 1.4;
+		player.image.y += movementSpeed / 1.4;
+	}
+	else if(leftPressed && downPressed)
+	{
+		console.log("left and down");
+		player.image.x -= movementSpeed / 1.4;
+		player.image.y += movementSpeed / 1.4;
+	}
+	else if(upPressed)
+	{
+		console.log("up");
+		player.image.y -= movementSpeed;
+	}
+	else if(downPressed)
+	{
+		console.log("down");
+		player.image.y += movementSpeed;
+	}
+	else if(leftPressed)
+	{
+		console.log("left");
+		player.image.x -= movementSpeed;
+	}
+	else if(rightPressed)
+	{
+		console.log("right");
+		player.image.x += movementSpeed;
+	}
+
+	if(player.image.x < 0)
+	{
+		player.image.x = 0;
+	}
+	if(player.image.y < 0)
+	{
+		player.image.y = 0;
+	}
+	console.log("player.image.x: " + player.image.x + " player.image.width: " + player.image.width + " canvas.width: " + canvas.width);
+	if((player.image.x + player.image.width) > canvas.width)
+	{
+		player.image.x = canvas.width + player.image.width;
+	}
+
+
+
 	stage.update();
 }
 
 function Player()
 {
 	this.image = new createjs.Bitmap("images/players/player_up.png");
-
+	this.image.x = Math.random()*canvas.width;
+	this.image.y = Math.random()*canvas.height;
 	stage.addChild(this.image);
-
-	this.move = function()
-	{
-		if(upPressed)
-			this.y -= 1;
-		if(downPressed)
-			this.y += 1;
-		if(leftPressed)
-			this.x -= 1;
-		if(rightPressed)
-			this.x += 1;
-	}
 }
 
 //allow for WASD and arrow control scheme
