@@ -70,7 +70,13 @@ function Bullet()
 	this.initialX = this.image.x;
 	this.initialY = this.image.y;
 	this.angle = player.image.rotation;
+
+	var mouseX = stage.mouseX;
+	var mouseY = stage.mouseY;
+	this.angle = (Math.atan2(mouseY - this.image.y, mouseX - this.image.x)* (180/Math.PI)) - 90;
+
 	console.log("bullet count: " + bulletArray.length);
+	console.log("bullet angle: " + this.angle);
 	stage.addChild(this.image);
 }
 
@@ -136,8 +142,13 @@ function moveBullets()
 {
 	for(var i = 0; i < bulletArray.length; i++)
 	{
-		bulletArray[i].image.x = Math.cos(bulletArray[i].angle) * bulletSpeed  + bulletArray[i].initialX;
-		bulletArray[i].image.y = Math.sin(bulletArray[i].angle) * bulletSpeed + bulletArray[i].initialY;
+		// o.x += Math.sin(o.rotation*(Math.PI/-180))*BULLET_SPEED;
+		// 	o.y += Math.cos(o.rotation*(Math.PI/-180))*BULLET_SPEED;
+
+		bulletArray[i].image.x += Math.sin(bulletArray[i].angle*(Math.PI/-180)) * bulletSpeed;
+		bulletArray[i].image.y += Math.cos(bulletArray[i].angle*(Math.PI/-180)) * bulletSpeed;
+		// bulletArray[i].image.x += Math.sin(bulletArray[i].angle) * bulletSpeed;
+		// bulletArray[i].image.y += Math.sin(bulletArray[i].angle) * bulletSpeed;
 		bulletArray[i].initialX = bulletArray[i].image.x;
 		bulletArray[i].initialY = bulletArray[i].image.y;
 	}
