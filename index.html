@@ -30,7 +30,7 @@
 	</head>
 	<body onload="init()">
         <font color = white>
-        <img alt = "full screen bg img" src = "background.jpg" id = "full-screen-background-image"/>
+        <img alt = "full screen bg img" src = "images/backgrounds/pagebackground.jpg" id = "full-screen-background-image"/>
         <div style="position: relative">
             <h1 style="position: fixed; width:100%; text-align: center"> <strong> Requiescat In Pace </strong> </h1>
             <p style = "text-align: center"> Prototype 1 </p>
@@ -41,15 +41,14 @@
         <div style="position: relative">
             <p style="position: fixed; bottom: 0; width:100%; text-align: center"> Credits: The awesome group of CSCE 315 containing the members Patrick, Waylon, Eliut, and Garrett</p>
         </div>
-		<!-- The canvas for the panning background -->
+		<!-- The canvas for the background -->
 		<canvas id="background" width="1000" height="736">
 			Your browser does not support canvas. Please try again with a different browser.
 		</canvas>
-		<!-- The canvas for all enemy ships and bullets -->
+		<!-- The canvas for all players and bullets -->
 		<canvas id="bullets" width="1000" height="736">
 		</canvas>
-		<!-- The canvas the ship uses (can only move up
-         one forth the screen.) -->
+		<!-- The canvas the player uses  -->
 		<canvas id="players" width="1000" height="736">
 		</canvas>
 		<script src="RIP.js"></script>
