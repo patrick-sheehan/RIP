@@ -32,36 +32,21 @@ var POWERUP_ODDS = 500;	// "1/this" chance of powerup per tick
 
 document.onkeydown = handleKeyDown;
 document.onkeyup = handleKeyUp;
+document.getElementById( "gameCanvas" ).onmousedown = function(event){
+    event.preventDefault();
+};
 
 function init()
 {
 	canvas = document.getElementById("gameCanvas");
 	stage = new createjs.Stage(canvas);
-
 	background = new createjs.Bitmap("images/backgrounds/grass-tiled.png");
 	stage.addChild(background);
-
 	createjs.Ticker.setFPS(60);
 	createjs.Ticker.addEventListener("tick", tick);
 	stage.addEventListener("stagemousedown", mouseClick);
 	stage.addEventListener("stagemouseup", mouseUnclick);
 	player = new Player();
-    canvas.on("click", function(e) {
-     
-     // use pageX and pageY to get the mouse position
-     // relative to the browser window
-     
-     var mouse = {
-     x: e.pageX - canvasPosition.x,
-     y: e.pageY - canvasPosition.y
-     }
-     
-     // now you have local coordinates,
-     // which consider a (0,0) origin at the
-     // top-left of canvas element
-     });
-    
-
 	stage.update();
 }
 
@@ -109,7 +94,7 @@ function Bullet()
 
 function Powerup()
 {
-	this.image = new createjs.Bitmap("images/effects/bulletPowerup.png");
+	this.image = new createjs.Bitmap("images/effects/double_tap_resize.png");
 	this.image.regX = 23;
 	this.image.regY = 23;
 	this.image.x = canvas.width / 2;
@@ -281,6 +266,7 @@ function checkPowerupCollision()
 function mouseClick(canvas, e)
 {
 	mousePressed = true;
+    e.preventDefault();
 }
 
 function mouseUnclick(e)

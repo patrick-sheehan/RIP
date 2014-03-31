@@ -63,10 +63,52 @@
 	                width: 800px;
 	                background: transparent;
             	}
-        	
+        canvas.enableDOMEvents(true);
 		</style>
         <link rel="stylesheet" type="text/css" href="style_2.css">
-            <!-- <script>    </script> -->
+         <!-- <script>
+                var stage, label, shape, oldX, oldY, size, color;
+                
+                function init() {
+                    stage = new createjs.Stage("gameCanvas");
+                    stage.enableDOMEvents(true);
+                    label = new createjs.Text("finger paint", "24px Arial");
+                    label.x = label.y = 10;
+                    
+                    shape = new createjs.Shape();
+                    stage.addChild(shape, label);
+                    
+                    // set up our defaults:
+                    color = "#0FF";
+                    size = 2;
+                    
+                    // add handler for stage mouse events:
+                    stage.on("stagemousedown", function(event) {
+                             size = 10;
+                             })
+                             
+                             stage.on("stagemouseup", function(event) {
+                                      color = createjs.Graphics.getHSL(Math.random()*360, 100, 50);
+                                      size = 2;
+                                      })
+                                      
+                                      
+                                      stage.on("stagemousemove",function(evt) {
+                                               if (oldX) {
+                                               shape.graphics.beginStroke(color)
+                                               .setStrokeStyle(size, "round")
+                                               .moveTo(oldX, oldY)
+                                               .lineTo(evt.stageX, evt.stageY);
+                                               stage.update();
+                                               }
+                                               oldX = evt.stageX;
+                                               oldY = evt.stageY;
+                                               })
+                                               
+                                               stage.update();
+                }
+            </script>
+        -->
 	</head>
 	<body onload="init()">
 	      <font color = white>
@@ -80,7 +122,7 @@
 	          <p style = "text-align: center"> Prototype 1 </p>
 	      </div>
 	      <form action="" style = "position: fixed; top: 0; width: 100% text-align: center"   >
-	          <input type="button" value="Donate!!!">
+	          <input type="button" value="Donate!!! (JK)">
 	      </form>
 	      <div style="position: relative">
 	          <p style="position: fixed; bottom: 0; width:100%; text-align: center"> Credits: The awesome group of CSCE 315 containing the members Patrick, Waylon, Eliut, and Garrett</p>
