@@ -1,57 +1,91 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<meta charset="UTF-8">
 		<title>Requiescat in Pace</title>
+
+		<script>
+		// this sets the namespace for CreateJS to the window object, so you can instantiate objects without specifying 
+		// the namespace: "new Graphics()" instead of "new createjs.Graphics()"
+		// this is a quick way to make projects built on pervious versions of EaselJS run without extensive modifications
+		</script>
+		
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/examples/assets/preloadjs-NEXT.min.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/examples/assets/soundjs-NEXT.min.js"></script>
+
+		<!-- Note: All core EaselJS classes are listed here: -->
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/createjs/events/Event.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/createjs/events/EventDispatcher.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/createjs/utils/IndexOf.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/utils/UID.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/utils/Ticker.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/geom/Matrix2D.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/geom/Point.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/geom/Rectangle.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/display/Shadow.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/display/SpriteSheet.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/display/Graphics.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/display/DisplayObject.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/display/Container.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/display/Stage.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/display/Bitmap.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/display/Sprite.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/display/BitmapAnimation.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/display/BitmapText.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/display/Shape.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/display/Text.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/display/DOMElement.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/events/MouseEvent.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/filters/Filter.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/ui/ButtonHelper.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/ui/Touch.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/utils/SpriteSheetUtils.js"></script>
+		<script type="text/javascript" src="EaselJS-release_v0.7.1/src/easeljs/utils/SpriteSheetBuilder.js"></script>
+
+		<!-- We also provide hosted minified versions of all CreateJS libraries.
+		    http://code.createjs.com -->
+
+		<!-- Game script below -->
+		<script type="text/javascript" src="RIP.js"></script>
+		
+
 		<style>
 			canvas {
-                position: absolute;
-                left: 0;
-                right: 0;
-                top: 10%;
-                padding-left: 0;
-                padding-right: 0;
-                margin-left: auto;
-                margin-right: auto;
-                display: block;
-                width: 800px;
-                background: transparent;
-            }
-        #background {
-            z-index: -2;
-        }
-        #bullets {
-            z-index: -1;
-        }
-        #players {
-            z-index: 0;
-        }
+	                position: absolute;
+	                left: 0;
+	                right: 0;
+	                top: 10%;
+	                padding-left: 0;
+	                padding-right: 0;
+	                margin-left: auto;
+	                margin-right: auto;
+	                display: block;
+	                width: 800px;
+	                background: transparent;
+            	}
+        	
 		</style>
         <link rel="stylesheet" type="text/css" href="style_2.css">
 	</head>
 	<body onload="init()">
-        <font color = white>
-        <img alt = "full screen bg img" src = "images/backgrounds/pagebackground.jpg" id = "full-screen-background-image"/>
-        <div style="position: relative">
-            <h1 style="position: fixed; width:100%; text-align: center"> <strong> Requiescat In Pace </strong> </h1>
-            <p style = "text-align: center"> Prototype 1 </p>
-        </div>
-        <form action="" style = "position: fixed; top: 0; width: 100% text-align: center"   >
-            <input type="button" value="Donate!!!">
-                </form>
-        <div style="position: relative">
-            <p style="position: fixed; bottom: 0; width:100%; text-align: center"> Credits: The awesome group of CSCE 315 containing the members Patrick, Waylon, Eliut, and Garrett</p>
-        </div>
-		<!-- The canvas for the background -->
-		<canvas id="background" width="1000" height="736">
+	      <font color = white>
+	      <img alt = "full screen bg img" src = "images/backgrounds/pagebackground.jpg" id = "full-screen-background-image"/>
+	      <img alt = "preloadbackground" src = "images/backgrounds/grass-tiled.png" id = "preloadBackground" width="0" height="0"/>
+	      <img alt = "preloadplayer" src = "images/player.png" id = "preloadPlayer" width="0" height="0"/>
+	      <img alt = "preloadbullet" src = "images/bullet.png" id = "preloadBullet" width="0" height="0"/>
+	      <div style="position: relative">
+	          <h1 style="position: fixed; width:100%; text-align: center"> <strong> Requiescat In Pace </strong> </h1>
+	          <p style = "text-align: center"> Prototype 1 </p>
+	      </div>
+	      <form action="" style = "position: fixed; top: 0; width: 100% text-align: center"   >
+	          <input type="button" value="Donate!!!">
+	      </form>
+	      <div style="position: relative">
+	          <p style="position: fixed; bottom: 0; width:100%; text-align: center"> Credits: The awesome group of CSCE 315 containing the members Patrick, Waylon, Eliut, and Garrett</p>
+	      </div>
+	  	<canvas id="gameCanvas" width="1000" height="736">
 			Your browser does not support canvas. Please try again with a different browser.
 		</canvas>
-		<!-- The canvas for all players and bullets -->
-		<canvas id="bullets" width="1000" height="736">
-		</canvas>
-		<!-- The canvas the player uses  -->
-		<canvas id="players" width="1000" height="736">
-		</canvas>
-		<script src="RIP.js"></script>
         </font>
 	</body>
 </html>
