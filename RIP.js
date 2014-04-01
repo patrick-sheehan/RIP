@@ -1,13 +1,3 @@
-// connection port
-// host: 10.201.145.60
-// port: 8080
-
-var socket = io.connect('http://10.201.145.60:8080');
-socket.on('message', function(data) {
-	console.log(data);
-    //whenever something is passed through socket, this function will be triggered
-});
-
 var stage;
 var player;
 var background;
