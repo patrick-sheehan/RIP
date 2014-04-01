@@ -20,8 +20,8 @@ socket.on('message', function(data) {
 });
 
 socket.on('newGame', function(data){
-  log.debug('Received data from server. Now assembling puzzle.');
-  createPuzzlePieces(data.pieces);  
+  log.debug('Received data from server.');
+   
 });
 
 socket.on('roomData', function(data){
