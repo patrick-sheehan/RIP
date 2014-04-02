@@ -103,6 +103,16 @@ function Powerup()
 	stage.addChild(this.image);
 }
 
+function PowerupIndicator()
+{
+	this.image = new createjs.Bitmap("images/effects/powerupBlueRing.png");
+	this.image.regX = 50;
+	this.image.regY = 50;
+	this.image.x = player.image.x;
+	this.image.y = player.image.y;
+	
+	stage.addChild(this.image);
+}
 function movePlayer()
 {
 	//doing each combination, as if you detect them separately then the player moves sqrt(2) as fast on diagonals
@@ -110,54 +120,117 @@ function movePlayer()
 	{
 		player.image.y -= movementSpeed / 1.4;
 		player.image.x -= movementSpeed / 1.4;
+		
+		if (playerPowerupTime > 0)
+		{
+			powerRing.image.y -= movementSpeed / 1.4;
+			powerRing.image.x -= movementSpeed / 1.4;
+		}
+		
 	}
 	else if(upPressed && rightPressed)
 	{
 		player.image.y -= movementSpeed / 1.4;
 		player.image.x += movementSpeed / 1.4;
+		
+		if (playerPowerupTime > 0)
+		{
+			powerRing.image.y -= movementSpeed / 1.4;
+			powerRing.image.x += movementSpeed / 1.4;
+		}
 	}
 	else if(rightPressed && downPressed)
 	{
 		player.image.x += movementSpeed / 1.4;
 		player.image.y += movementSpeed / 1.4;
+		if (playerPowerupTime > 0)
+		{
+			powerRing.image.x += movementSpeed / 1.4;
+			powerRing.image.y += movementSpeed / 1.4;
+		}
 	}
 	else if(leftPressed && downPressed)
 	{
 		player.image.x -= movementSpeed / 1.4;
 		player.image.y += movementSpeed / 1.4;
+		if (playerPowerupTime > 0)
+		{		
+			powerRing.image.x -= movementSpeed / 1.4;
+			powerRing.image.y += movementSpeed / 1.4;
+		}
 	}
 	else if(upPressed)
 	{
 		player.image.y -= movementSpeed;
+		
+		if (playerPowerupTime > 0)
+		{
+			powerRing.image.y -= movementSpeed;
+		}
 	}
 	else if(downPressed)
 	{
 		player.image.y += movementSpeed;
+		
+		if (playerPowerupTime > 0)
+		{
+			powerRing.image.y += movementSpeed;
+		}
 	}
 	else if(leftPressed)
 	{
 		player.image.x -= movementSpeed;
+		
+		if (playerPowerupTime > 0)
+		{
+			powerRing.image.x -= movementSpeed;
+		}
 	}
 	else if(rightPressed)
 	{
 		player.image.x += movementSpeed;
+		
+		if (playerPowerupTime > 0)
+		{
+			powerRing.image.x += movementSpeed;
+		}
 	}
 
 	if(player.image.x < 0)
 	{
 		player.image.x = 0;
+		
+		if (playerPowerupTime > 0)
+		{
+			powerRing.image.x = 0;
+		}
 	}
 	if(player.image.y < 0)
 	{
 		player.image.y = 0;
+		
+		if (playerPowerupTime > 0)
+		{
+			powerRing.image.y = 0;
+		}
 	}
 	if(player.image.x  > canvas.width)
 	{
 		player.image.x = canvas.width;
+		
+		if (playerPowerupTime > 0)
+		{
+			powerRing.image.x = canvas.width;
+		}
 	}
 	if(player.image.y > canvas.height)
 	{
 		player.image.y = canvas.height;
+		
+		if (playerPowerupTime > 0)
+		{
+			powerRing.image.y = canvas.height;
+		}
 	}
 }
 
@@ -223,14 +296,18 @@ function determinePowerup()
 		var originalY = player.image.y;
 
 		removePlayerPowerup = false;
-		stage.removeChild(player.image);
-		player.image = new createjs.Bitmap("images/players/player_1.png");
-		player.image.regX = 50;
-		player.image.regY = 50;
-		player.image.x = originalX;
-		player.image.y = originalY;
-		stage.addChild(player.image);
+		
+		//stage.removeChild(player.image);
+		//player.image = new createjs.Bitmap("images/players/player_1.png");
+		//player.image.regX = 50;
+		//player.image.regY = 50;
+		//player.image.x = originalX;
+		//player.image.y = originalY;
+		//stage.addChild(player.image);
 
+		stage.removeChild(powerRing.image);
+		
+		
 		currentBulletFireRate = BULLET_FIRERATE_NORMAL;
 	}
 }
@@ -246,6 +323,9 @@ function checkPowerupCollision()
 			var originalX = player.image.x;
 			var originalY = player.image.y;
 
+			powerRing = new PowerupIndicator();
+			
+			/*
 			stage.removeChild(player.image);
 			player.image = new createjs.Bitmap("images/effects/playerWithPowerup.png");
 			player.image.regX = 50;
@@ -253,8 +333,11 @@ function checkPowerupCollision()
 			player.image.x = originalX;
 			player.image.y = originalY;
 			stage.addChild(player.image);
+			*/
+			
 			stage.removeChild(powerup.image);
-
+			
+			
 			powerupExists = false;
 			removePlayerPowerup = true;
 			playerPowerupTime = MAX_POWERUP_TIME;
