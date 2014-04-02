@@ -32,21 +32,21 @@ var POWERUP_ODDS = 500;	// "1/this" chance of powerup per tick
 
 document.onkeydown = handleKeyDown;
 document.onkeyup = handleKeyUp;
+document.getElementById( "gameCanvas" ).onmousedown = function(event){
+    event.preventDefault();
+};
 
 function init()
 {
 	canvas = document.getElementById("gameCanvas");
 	stage = new createjs.Stage(canvas);
-
 	background = new createjs.Bitmap("images/backgrounds/grass-tiled.png");
 	stage.addChild(background);
-
 	createjs.Ticker.setFPS(60);
 	createjs.Ticker.addEventListener("tick", tick);
 	stage.addEventListener("stagemousedown", mouseClick);
 	stage.addEventListener("stagemouseup", mouseUnclick);
 	player = new Player();
-
 	stage.update();
 }
 
@@ -64,7 +64,7 @@ function tick(event)
 
 function Player()
 {
-	this.image = new createjs.Bitmap("images/player.png");
+	this.image = new createjs.Bitmap("images/players/player_1.png");
 	this.image.x = Math.random()*canvas.width;
 	this.image.y = Math.random()*canvas.height;
 	//set registration points to center of image
@@ -75,7 +75,7 @@ function Player()
 
 function Bullet()
 {
-	this.image = new createjs.Bitmap("images/bullet.png");
+	this.image = new createjs.Bitmap("images/objects/bullet.png");
 	this.image.regX = 2;
 	this.image.regY = 2;
 	this.image.x = player.image.x;
@@ -94,7 +94,7 @@ function Bullet()
 
 function Powerup()
 {
-	this.image = new createjs.Bitmap("images/bulletPowerup.png");
+	this.image = new createjs.Bitmap("images/effects/double_tap_resize.png");
 	this.image.regX = 23;
 	this.image.regY = 23;
 	this.image.x = canvas.width / 2;
@@ -224,7 +224,7 @@ function determinePowerup()
 
 		removePlayerPowerup = false;
 		stage.removeChild(player.image);
-		player.image = new createjs.Bitmap("images/player.png");
+		player.image = new createjs.Bitmap("images/players/player_1.png");
 		player.image.regX = 50;
 		player.image.regY = 50;
 		player.image.x = originalX;
@@ -247,7 +247,7 @@ function checkPowerupCollision()
 			var originalY = player.image.y;
 
 			stage.removeChild(player.image);
-			player.image = new createjs.Bitmap("images/playerWithPowerup.png");
+			player.image = new createjs.Bitmap("images/effects/playerWithPowerup.png");
 			player.image.regX = 50;
 			player.image.regY = 50;
 			player.image.x = originalX;
@@ -263,15 +263,17 @@ function checkPowerupCollision()
 	}
 }
 
-function mouseClick(e)
+function mouseClick(canvas, e)
 {
 	mousePressed = true;
+    e.preventDefault();
 }
 
 function mouseUnclick(e)
 {
 	mousePressed = false;
 }
+
 
 //allow for WASD and arrow control scheme
 function handleKeyDown(e) {
