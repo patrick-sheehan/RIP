@@ -349,7 +349,9 @@ function checkPowerupCollision()
 function mouseClick(canvas, e)
 {
 	mousePressed = true;
-    e.preventDefault();
+	
+	// ???
+	// e.preventDefault();
 }
 
 function mouseUnclick(e)
