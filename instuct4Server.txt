@@ -1,0 +1,20 @@
+Before you start: be sure to know where the git hub folder with the server.js is at.
+
+on CSCE computers:
+1. open up putty, type under host name: compute.cse.tamu.edu
+2. login 
+3. go to directory that currently holds the RIP file 
+4. when in the RIP file, type in:  node server.js
+5. finally just open up the folder and activity from the server and client should be currently occurring.
+
+
+on personal computers:
+
+Windows: 
+1. follow the same steps for the csce computers. 
+
+mac:
+1. download node js by googling it
+2. after installation just login to terminal.
+3. locate RIP directory and type: node server.js
+4. finally just open up .html file and activity should be occurring
