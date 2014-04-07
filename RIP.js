@@ -3,6 +3,10 @@ var player;
 var background;
 var canvas;
 
+var ai;
+var AIMoveCounter = 0;			//counter to count ticks before changing move direction
+var AI_TICKS_TO_CHANGE = 60;	//number of ticks before AI changes move direction
+
 var upKey = 87;
 var downKey = 83;
 var leftKey = 65; 
@@ -21,6 +25,7 @@ var BULLET_FIREREATE_POWERUP = 5;
 var bulletFrameCounter = 0;
 var bulletSpeed = 15;
 
+//ALL_CAPS variables are final, do not modify their values in the code, only up here
 var bulletArray = [];
 var powerupExists = false;
 var powerup;			//object
@@ -47,6 +52,7 @@ function init()
 	stage.addEventListener("stagemousedown", mouseClick);
 	stage.addEventListener("stagemouseup", mouseUnclick);
 	player = new Player();
+	ai = new AI();
 	stage.update();
 }
 
@@ -58,6 +64,8 @@ function tick(event)
 		playerShoot();
 	moveBullets();
 	determinePowerup();
+	moveAI();
+	checkAIShot();
 	checkPowerupCollision();
 	stage.update();
 }
@@ -70,6 +78,18 @@ function Player()
 	//set registration points to center of image
 	this.image.regX = 50;
 	this.image.regY = 50;
+	stage.addChild(this.image);
+}
+
+function AI()
+{
+	this.image = new createjs.Bitmap("images/players/player_1.png");
+	this.image.x = Math.random()*canvas.width;
+	this.image.y = Math.random()*canvas.height;
+	//set registration points to center of image
+	this.image.regX = 50;
+	this.image.regY = 50;
+	this.moveDirection = 0;
 	stage.addChild(this.image);
 }
 
@@ -231,6 +251,15 @@ function movePlayer()
 		{
 			powerRing.image.y = canvas.height;
 		}
+	}
+}
+
+//using AIMoveCounter and AI_TICKS_TO_CHANGE
+function moveAI()
+{
+	if(AIMoveCounter == 0)
+	{
+		ai.moveDirection = Math.floor(Math.random()*POWERUP_ODDS)
 	}
 }
 
