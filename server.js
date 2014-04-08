@@ -1,5 +1,6 @@
-var io = require('socket.io').listen(8080);
-
+//var io = require('socket.io').listen(65535);
+//8080
+var app = require('http').createServer(handler), io = require('socket.io').listen(app), fs = require('fs') app.listen(65535);
 
 
 var clients = new Array();

@@ -2,7 +2,8 @@
 // host: 10.201.145.60
 // port: 8080
 
-var socket = io.connect('http://localhost:8080');
+var socket = io.connect('http://insanitignis.com:65535');
+//var socket = io.connect('http://localhost:8080');
 var myClientId = null;
 
 
