@@ -518,7 +518,7 @@ function checkPowerupCollision()
 function updateHealthTexts()
 {
 	playerText.text = "Your Health: " + player.health + "%";
-	enemy1Text.text = "Enemy1 Health: " + ai.health + "%";
+	enemy1Text.text = "Enemy 1 Health: " + ai.health + "%";
 	//playerText.text = "Your Health: " + player.health + "%";
 	//playerText.text = "Your Health: " + player.health + "%";
 
