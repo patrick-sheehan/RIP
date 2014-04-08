@@ -33,7 +33,7 @@ var powerup;						//object
 var playerPowerupTime = 0;			//time counter (in ticks) that player can have powerup
 var MAX_POWERUP_TIME = 500;			//set time that player gets it
 var removePlayerPowerup = false;	//so that on each tick it doesn't change image back
-var POWERUP_ODDS = 100;				// "1/this" chance of powerup per tick
+var POWERUP_ODDS = 300;				// "1/this" chance of powerup per tick
 
 
 document.onkeydown = handleKeyDown;
