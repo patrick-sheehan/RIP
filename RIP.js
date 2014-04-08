@@ -4,8 +4,8 @@ var background;
 var canvas;
 
 var ai;
-var AIMoveCounter = 0;			//counter to count ticks before changing move direction
-var AI_TICKS_TO_CHANGE = 60;	//number of ticks before AI changes move direction
+var AIMoveCounter = 0;				//counter to count ticks before changing move direction
+var AI_TICKS_TO_CHANGE = 40;			//number of ticks before AI changes move direction, lower numhber = more sporatic movement changes
 
 var upKey = 87;
 var downKey = 83;
@@ -19,27 +19,28 @@ var rightPressed;
 var mousePressed = false;
 
 var movementSpeed = 5;
-var currentBulletFireRate = 20;	//higher the rate, slower bullet shoots
+var currentBulletFireRate = 20;		//higher the rate, slower bullet shoots
 var BULLET_FIRERATE_NORMAL = 20;
 var BULLET_FIREREATE_POWERUP = 5;
 var bulletFrameCounter = 0;
 var bulletSpeed = 15;
+var BULLET_DAMAGE = 20;				//damage each bullet does, player's health starts at 100
 
 //ALL_CAPS variables are final, do not modify their values in the code, only up here
 var bulletArray = [];
 var powerupExists = false;
-var powerup;			//object
-var playerPowerupTime = 0;	//time counter (in ticks) that player can have powerup
-var MAX_POWERUP_TIME = 500;	//set time that player gets it
+var powerup;						//object
+var playerPowerupTime = 0;			//time counter (in ticks) that player can have powerup
+var MAX_POWERUP_TIME = 500;			//set time that player gets it
 var removePlayerPowerup = false;	//so that on each tick it doesn't change image back
-var POWERUP_ODDS = 500;	// "1/this" chance of powerup per tick
+var POWERUP_ODDS = 100;				// "1/this" chance of powerup per tick
 
 
 document.onkeydown = handleKeyDown;
 document.onkeyup = handleKeyUp;
 document.getElementById( "gameCanvas" ).onmousedown = function(event){
     event.preventDefault();
-};
+};wa
 
 function init()
 {
@@ -65,7 +66,7 @@ function tick(event)
 	moveBullets();
 	determinePowerup();
 	moveAI();
-	checkAIShot();
+	checkAIBulletCollision();
 	checkPowerupCollision();
 	stage.update();
 }
@@ -90,6 +91,7 @@ function AI()
 	this.image.regX = 50;
 	this.image.regY = 50;
 	this.moveDirection = 0;
+	this.health = 100;
 	stage.addChild(this.image);
 }
 
@@ -216,40 +218,41 @@ function movePlayer()
 		}
 	}
 
-	if(player.image.x < 0)
+	var threshhold = 50;	//player boundaries
+	if(player.image.x - threshhold < 0)
 	{
-		player.image.x = 0;
+		player.image.x = threshhold;
 		
 		if (playerPowerupTime > 0)
 		{
-			powerRing.image.x = 0;
+			powerRing.image.x = threshhold;
 		}
 	}
-	if(player.image.y < 0)
+	if(player.image.y - threshhold < 0)
 	{
-		player.image.y = 0;
+		player.image.y = threshhold;
 		
 		if (playerPowerupTime > 0)
 		{
-			powerRing.image.y = 0;
+			powerRing.image.y = threshhold;
 		}
 	}
-	if(player.image.x  > canvas.width)
+	if(player.image.x + threshhold  > canvas.width)
 	{
-		player.image.x = canvas.width;
+		player.image.x = canvas.width - threshhold;
 		
 		if (playerPowerupTime > 0)
 		{
-			powerRing.image.x = canvas.width;
+			powerRing.image.x = canvas.width - threshhold;
 		}
 	}
-	if(player.image.y > canvas.height)
+	if(player.image.y + threshhold > canvas.height)
 	{
-		player.image.y = canvas.height;
+		player.image.y = canvas.height - threshhold;
 		
 		if (playerPowerupTime > 0)
 		{
-			powerRing.image.y = canvas.height;
+			powerRing.image.y = canvas.height - threshhold;
 		}
 	}
 }
@@ -257,9 +260,73 @@ function movePlayer()
 //using AIMoveCounter and AI_TICKS_TO_CHANGE
 function moveAI()
 {
+	//new move direction
 	if(AIMoveCounter == 0)
 	{
-		ai.moveDirection = Math.floor(Math.random()*POWERUP_ODDS)
+		//0-7
+		ai.moveDirection = Math.floor(Math.random()*8);
+		AIMoveCounter++;
+	}
+	else if(AIMoveCounter >= AI_TICKS_TO_CHANGE)
+	{
+		AIMoveCounter = 0;
+	}
+	else
+	{
+		AIMoveCounter++;
+	}
+
+	switch(ai.moveDirection)
+	{
+		case 0:
+			ai.image.x += movementSpeed;
+			break;
+		case 1:
+			ai.image.x -= movementSpeed;
+			break;
+		case 2:
+			ai.image.y += movementSpeed;
+			break;
+		case 3:
+			ai.image.y -= movementSpeed;
+			break;
+		case 4:
+			ai.image.x += movementSpeed / 1.4;
+			ai.image.y += movementSpeed / 1.4;
+			break;
+		case 5:
+			ai.image.x -= movementSpeed / 1.4;
+			ai.image.y -= movementSpeed / 1.4;
+			break;
+		case 6:
+			ai.image.x += movementSpeed / 1.4;
+			ai.image.y -= movementSpeed / 1.4;
+			break;
+		default:
+			ai.image.x -= movementSpeed / 1.4;
+			ai.image.y += movementSpeed / 1.4;
+	}
+
+	var threshhold = 50;
+	if(ai.image.x - threshhold < 0)
+	{
+		ai.image.x = threshhold;
+		AIMoveCounter = 0;
+	}
+	if(ai.image.y - threshhold < 0)
+	{
+		ai.image.y = threshhold;
+		AIMoveCounter = 0;
+	}
+	if(ai.image.x + threshhold  > canvas.width)
+	{
+		ai.image.x = canvas.width - threshhold;
+		AIMoveCounter = 0;
+	}
+	if(ai.image.y + threshhold > canvas.height)
+	{
+		ai.image.y = canvas.height - threshhold;
+		AIMoveCounter = 0;
 	}
 }
 
@@ -319,7 +386,7 @@ function determinePowerup()
 	{
 		playerPowerupTime --;
 	}
-	else if (removePlayerPowerup)		//player powerup time is over
+	if (playerPowerupTime == 0 && removePlayerPowerup)		//player powerup time is over
 	{
 		var originalX = player.image.x;
 		var originalY = player.image.y;
@@ -338,6 +405,45 @@ function determinePowerup()
 		
 		
 		currentBulletFireRate = BULLET_FIRERATE_NORMAL;
+	}
+}
+
+function checkAIBulletCollision()
+{
+	var threshhold = 30;
+	for(var i = 0; i < bulletArray.length; i++)
+	{
+		if(bulletArray[i].image.x > ai.image.x - threshhold &&
+			bulletArray[i].image.x < ai.image.x + threshhold &&
+			bulletArray[i].image.y > ai.image.y - threshhold &&
+			bulletArray[i].image.y < ai.image.y + threshhold)
+		{
+			console.log("bullet collision");
+			stage.removeChild(bulletArray[i].image);
+			bulletArray.slice(i);
+			ai.health -= BULLET_DAMAGE;
+			if(ai.health <= 0)
+			{
+				stage.removeChild(ai.image);
+				delete ai;
+				ai = new AI();
+			}
+		}
+
+
+		// bulletArray[i].image.x += Math.sin(bulletArray[i].angle*(Math.PI/-180)) * bulletSpeed;
+		// bulletArray[i].image.y += Math.cos(bulletArray[i].angle*(Math.PI/-180)) * bulletSpeed;
+		// bulletArray[i].initialX = bulletArray[i].image.x;
+		// bulletArray[i].initialY = bulletArray[i].image.y;
+
+		// //TODO: this is to prevent memory leak with bullets travelling off the canvas indefinitely, currently causes bug where
+		// //bullet completely stops
+		// if(bulletArray[i].image.x < 0 || bulletArray[i].image.x > canvas.width || bulletArray[i].image.y < 0 || bulletArray[i].image.y > canvas.height)
+		// {
+		// 	var thisBullet = bulletArray[i];
+		// 	//delete thisBullet;
+		// 	//bulletArray = bulletArray.slice(i);
+		// }
 	}
 }
 
