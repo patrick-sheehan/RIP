@@ -49,6 +49,7 @@
 		<script src = "node_modules/socket.io/node_modules/socket.io-client/dist/socket.io.js"></script>
 		<script type="text/javascript" src="RIP.js"></script>
 		<script type= "text/javascript" src= "client.js"></script>
+        <script type= "text/javascript" src= "server.js"></script>
 		 
 		<style>
 			canvas {
@@ -67,52 +68,19 @@
         canvas.enableDOMEvents(true);
 		</style>
         <link rel="stylesheet" type="text/css" href="style_2.css">
-         <!-- <script>
-                var stage, label, shape, oldX, oldY, size, color;
-                
-                function init() {
-                    stage = new createjs.Stage("gameCanvas");
-                    stage.enableDOMEvents(true);
-                    label = new createjs.Text("finger paint", "24px Arial");
-                    label.x = label.y = 10;
-                    
-                    shape = new createjs.Shape();
-                    stage.addChild(shape, label);
-                    
-                    // set up our defaults:
-                    color = "#0FF";
-                    size = 2;
-                    
-                    // add handler for stage mouse events:
-                    stage.on("stagemousedown", function(event) {
-                             size = 10;
-                             })
-                             
-                             stage.on("stagemouseup", function(event) {
-                                      color = createjs.Graphics.getHSL(Math.random()*360, 100, 50);
-                                      size = 2;
-                                      })
-                                      
-                                      
-                                      stage.on("stagemousemove",function(evt) {
-                                               if (oldX) {
-                                               shape.graphics.beginStroke(color)
-                                               .setStrokeStyle(size, "round")
-                                               .moveTo(oldX, oldY)
-                                               .lineTo(evt.stageX, evt.stageY);
-                                               stage.update();
-                                               }
-                                               oldX = evt.stageX;
-                                               oldY = evt.stageY;
-                                               })
-                                               
-                                               stage.update();
-                }
-            </script>
-        -->
+  
 	</head>
 	<body onload="init()">
         <font color = white>
+            <div style = "position: relative">
+<p style = "position: fixed; top: 25px">
+                    <SCRIPT>
+                        //client_num = document.getElementById("c_num").value;
+                        document.write('There are '+num_clients+' clients connected.');
+                        </SCRIPT>
+                    </p>
+                    </div>
+
         <div style="position: relative">
             <p style = "position: fixed; right: 100px"> <strong>Song Of The Day!</strong></p>
         </div>
@@ -143,6 +111,16 @@
 	      <div style="position: relative">
 	          <p style="position: fixed; bottom: 0; width:100%; text-align: center"> Credits: The awesome group of CSCE 315 containing the members Patrick, Waylon, Eliut, and Garrett</p>
 	      </div>
+          <div style = "position: relative">
+              <p style = "position: fixed; left: 50px">
+              <strong>Instructions</strong>
+              </p>
+              <br><br>
+              <p style "position: fixed; left: 25px">
+              Move Player: Use 'W-A-S-D'<br>
+              Shoot: Left-Click Mouse (hold)<br>
+              </p>
+              </div>
 	  	<canvas id="gameCanvas" width="1000" height="736">
 			Your browser does not support canvas. Please try again with a different browser.
 		</canvas>

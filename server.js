@@ -51,6 +51,7 @@ io.sockets.on('connection', function(socket) {
   // broadcast room data
   io.sockets.in(roomName).emit('roomData', { roomName: roomName, players: io.sockets.manager.rooms['/' + roomName] });
 
+            //  socket.broadcast.emit('numclients', {num_clients});
   // inform everyone a new player has connected except the current socket
   socket.broadcast.emit('playerConnected', { clientid: socket.id, roomName : socket.roomName });
 

@@ -4,7 +4,7 @@
 
 var socket = io.connect('http://localhost:8080');
 var myClientId = null;
-
+var num_clients = 9001;
 
 socket.on('message', function(data) {
 
@@ -23,7 +23,11 @@ socket.on('newGame', function(data){
   log.debug('Received data from server.');
    
 });
-
+/*
+socket.on('numclients', function(data)
+          {
+          console.log(data);
+          });*/
 socket.on('roomData', function(data){
   log.debug('You are connected to room: ' + data.roomName)
   log.debug('Current players in room: ' + data.players)
