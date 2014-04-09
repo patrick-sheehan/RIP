@@ -3,6 +3,11 @@ var player;
 var background;
 var canvas;
 
+var playerText;
+var enemy1Text;
+var enemy2Text;
+var enemy3Text;
+
 var ai;
 var AIMoveCounter = 0;				//counter to count ticks before changing move direction
 var AI_TICKS_TO_CHANGE = 40;			//number of ticks before AI changes move direction, lower numhber = more sporatic movement changes
@@ -53,6 +58,7 @@ function init()
 	stage.addEventListener("stagemouseup", mouseUnclick);
 	player = new Player();
 	ai = new AI();
+	createTexts();
 	stage.update();
 }
 
@@ -67,11 +73,35 @@ function tick(event)
 	moveAI();
 	checkAIBulletCollision();
 	checkPowerupCollision();
+	updateHealthTexts();
 	stage.update();
+}
+
+function createTexts()
+{
+	playerText = new createjs.Text("Your Health: 100%", "bold 34px Comic Sans", "#ffffff");
+	enemy1Text = new createjs.Text("Enemy 1 Health: 100%", "bold 34px Comic Sans", "#ffffff");
+	enemy2Text = new createjs.Text("Enemy 2 Health: 100%", "bold 34px Comic Sans", "#ffffff");
+	enemy3Text = new createjs.Text("Enemy 3 Health: 100%", "bold 34px Comic Sans", "#ffffff");
+
+	playerText.x = 10;
+	playerText.y = 10;
+	enemy1Text.x = canvas.width - 350;
+	enemy1Text.y = 10;
+	enemy2Text.x = 10;
+	enemy2Text.y = canvas.height - 50;
+	enemy3Text.x = canvas.width - 350;
+	enemy3Text.y = canvas.height - 50;
+
+	stage.addChild(playerText);
+	stage.addChild(enemy1Text);
+	stage.addChild(enemy2Text);
+	stage.addChild(enemy3Text);
 }
 
 function Player()
 {
+	this.health = 100;
 	this.image = new createjs.Bitmap("images/players/player_1.png");
 	this.image.x = Math.random()*canvas.width;
 	this.image.y = Math.random()*canvas.height;
@@ -83,6 +113,7 @@ function Player()
 
 function AI()
 {
+	this.health = 100;
 	this.image = new createjs.Bitmap("images/players/player_1.png");
 	this.image.x = Math.random()*canvas.width;
 	this.image.y = Math.random()*canvas.height;
@@ -90,12 +121,13 @@ function AI()
 	this.image.regX = 50;
 	this.image.regY = 50;
 	this.moveDirection = 0;
-	this.health = 100;
 	stage.addChild(this.image);
 }
 
 function Bullet()
 {
+	this.damagable = true;
+
 	this.image = new createjs.Bitmap("images/objects/bullet.png");
 	this.image.regX = 2;
 	this.image.regY = 2;
@@ -415,9 +447,11 @@ function checkAIBulletCollision()
 		if(bulletArray[i].image.x > ai.image.x - threshhold &&
 			bulletArray[i].image.x < ai.image.x + threshhold &&
 			bulletArray[i].image.y > ai.image.y - threshhold &&
-			bulletArray[i].image.y < ai.image.y + threshhold)
+			bulletArray[i].image.y < ai.image.y + threshhold &&
+			bulletArray[i].damagable)
 		{
 			console.log("bullet collision");
+			bulletArray[i].damagable = false;
 			stage.removeChild(bulletArray[i].image);
 			bulletArray.slice(i);
 			ai.health -= BULLET_DAMAGE;
@@ -478,6 +512,40 @@ function checkPowerupCollision()
 			currentBulletFireRate = BULLET_FIREREATE_POWERUP;
 		}
 	}
+}
+
+function updateHealthTexts()
+{
+	playerText.text = "Your Health: " + player.health + "%";
+	enemy1Text.text = "Enemy 1 Health: " + ai.health + "%";
+	//playerText.text = "Your Health: " + player.health + "%";
+	//playerText.text = "Your Health: " + player.health + "%";
+
+	if(player.health >= 100)
+		playerText.color = "#ffffff";
+	else if(player.health > 80)
+		playerText.color = "#ffcccc";
+	else if(player.health > 60)
+		playerText.color = "#ff9999";
+	else if(player.health > 40)
+		playerText.color = "#ff6666";
+	else if(player.health > 20)
+		playerText.color = "#ff3333";
+	else
+		playerText.color = "#ff0000";
+
+	if(ai.health >= 100)
+		enemy1Text.color = "#ffffff";
+	else if(ai.health > 80)
+		enemy1Text.color = "#ffcccc";
+	else if(ai.health > 60)
+		enemy1Text.color = "#ff9999";
+	else if(ai.health > 40)
+		enemy1Text.color = "#ff6666";
+	else if(ai.health > 20)
+		enemy1Text.color = "#ff3333";
+	else
+		enemy1Text.color = "#ff0000";
 }
 
 function mouseClick(canvas, e)
