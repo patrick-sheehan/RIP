@@ -51,7 +51,7 @@
 		<script type= "text/javascript" src= "client.js"></script>
         <script type= "text/javascript" src= "server.js"></script>
 
-		<script src="http://insanitignis:65535/socket.io/node_modules/socket.io-client/dist/socket.io.js"></script> 
+		<!-- <script src="http://insanitignis:65535/socket.io/node_modules/socket.io-client/dist/socket.io.js"></script>-->
 		<!-- <script var socket = io.connect('http://insanitignis:65535')</script> -->
 
 		<style>
@@ -85,15 +85,43 @@
                     </div>
 
         <div style="position: relative">
-            <p style = "position: fixed; right: 100px"> <strong>Song Of The Day!</strong></p>
+            <p style = "position: fixed; right: 100px"> <strong>Song Of The Week!</strong></p>
         </div>
         <div>
             <p>
             <br><br>
+            
+            
+            
+            <div style="position: fixed; right: 5px">
+                <button onclick="playPause()" style = "position: fixed; right: 125px">Play/Pause</button>
+                <br>
+                <video id="video1" width="300" height = "200">
+                    <source src="videos/song_of_the_day.mp4" type="video/mp4">
+                        <!--<source src="mov_bbb.ogg" type="video/ogg"> -->
+                            Your browser does not support HTML5 video.
+                            </video>
+            </div>
+            
+            <script>
+                var myVideo=document.getElementById("video1");
+                
+                function playPause()
+                { 
+                    if (myVideo.paused) 
+                    myVideo.play(); 
+                    else 
+                    myVideo.pause(); 
+                }
+            </script>
+            
+            
+       <!--
         <video controls loop width="300" height="200" style = "position: fixed; right: 5px">
             <source src="videos/song_of_the_day.mp4" type="video/mp4">
                     Your browser does not support the video tag.
         </video>
+        -->
         <div style="position: relative">
             <p style = "position: fixed; top: 275px; right: 75px"> <strong>Our Video! (Pending)</strong></p>
         </div>
@@ -114,7 +142,7 @@
 	      <div style="position: relative">
 	          <p style="position: fixed; bottom: 0; width:100%; text-align: center"> Credits: The awesome group of CSCE 315 containing the members Patrick, Waylon, Eliut, and Garrett</p>
 	      </div>
-          <div style = "position: relative">
+          <div style = "position: fixed">
               <p style = "position: fixed; left: 50px">
               <strong>Instructions</strong>
               </p>
