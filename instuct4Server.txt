@@ -18,3 +18,16 @@ mac:
 2. after installation just login to terminal.
 3. locate RIP directory and type: node server.js
 4. finally just open up .html file and activity should be occurring
+
+
+
+
+
+Below is some notes after using the tutorial at 
+http://www.williammora.com/2013/03/nodejs-tutorial-building-chatroom-with.html
+
+
+package.json - identify dependencies (express, jade, socket.io, and underscore)
+
+
+had to install nodeJS, cURL
