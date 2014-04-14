@@ -3,30 +3,30 @@ var port = 8080;
 var app = express();    //create our app with express
 var server = require('http').createServer(app);
 var io = require('socket.io').listen(server);
+var playerCount = 0;
+var roomCount = 0;
 
+io.sockets.on('connection', function(client) { // client is connected
 
-io.sockets.on('connection', function(client) {
-	//client.emit('text_msg', {msg: 'welcome to connection'});
+	playerCount++;
+	client.on('message_to_server', function(player){ // client sent player data
+		
+		if (player.ID == -1) {
+			player.ID = playerCount;
+		}
 
-	client.on('message_to_server', function(data){
-		console.log("client position: (" + data.x_val + ", " + data.y_val + ")");
+		//console.log('playerID = ' + player.ID);	
+		console.log("player timestamp: " + player.cTimestamp);
+		console.log("player position: (" + player.x_val.toFixed(2) + ", " + player.y_val.toFixed(2) + ")");
+		//console.log("player health: " + player.health);
+		console.log("ET CETERA...\n");
 
-		io.sockets.emit('message_to_client', 'server received your data')
-
-		// probably use "socket.broadcast.emit()" to send to all sockets EXCEPT the sender
+		// io.sockets.emit('message_to_client', 'server received your data') 
+		// TODO: probably use "socket.broadcast.emit()" to send to message to all sockets EXCEPT the sender
 	});
 });
 
-
-// io.sockets.on('tick-emit', function() {
-// 	console.log('heard tick emission');
-// });
-
-// io.sockets.on('connection', function(socket) {
-// 	socket.on('tick', function(data) {
-// 		console.log('tick message sent');
-// 	});
-// });
+//io.sockets.on disconnection?
 
 app.configure(function() {
 	app.use(express.static(__dirname)); //sets the static file location

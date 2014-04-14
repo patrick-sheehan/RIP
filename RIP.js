@@ -63,7 +63,9 @@ function init()
 	createTexts();
 	stage.update();
 	
+
 	socket = io.connect('http://localhost:8080');	// connect the socket to the localhost at port 8080
+
 	// socket.emit('message', {txt: "init()"});		// emit a 'message' where the data is txt:"init()"
 
 	// socket.on('text_msg', function(data){					// read for a 'text_msg' from server
@@ -85,10 +87,11 @@ function tick(event)
 	checkPowerupCollision();
 	updateHealthTexts();
 	stage.update();
-	
-	// TODO: add timestamps to data to promote accuracy
-	socket.emit('message_to_server', {x_val: player.image.x, y_val: player.image.y});
 
+
+  var timestamp = new Date().getTime();
+	socket.emit('message_to_server', {cTimestamp: timestamp, x_val: player.image.x, y_val: player.image.y});
+	
 	socket.on('message_to_client', function(data){
 		console.log("server sent: " + data);
 	});
@@ -118,6 +121,7 @@ function createTexts()
 
 function Player()
 {
+	this.ID = -1; // will be assigned server-side
 	this.health = 100;
 	this.image = new createjs.Bitmap("images/players/player_1.png");
 	this.image.x = Math.random()*canvas.width;
