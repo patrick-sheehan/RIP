@@ -75,6 +75,8 @@ function tick(event)
 	checkPowerupCollision();
 	updateHealthTexts();
 	stage.update();
+	
+	this.emit('tick-emit');
 }
 
 function createTexts()
