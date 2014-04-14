@@ -8,8 +8,12 @@ var io = require('socket.io').listen(server);
 io.sockets.on('connection', function(client) {
 	//client.emit('text_msg', {msg: 'welcome to connection'});
 
-	client.on('message', function(data){
-		console.log("****** message: " + data.txt);
+	client.on('message_to_server', function(data){
+		console.log("client position: (" + data.x_val + ", " + data.y_val + ")");
+
+		io.sockets.emit('message_to_client', 'server received your data')
+
+		// probably use "socket.broadcast.emit()" to send to all sockets EXCEPT the sender
 	});
 });
 

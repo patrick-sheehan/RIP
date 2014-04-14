@@ -64,11 +64,11 @@ function init()
 	stage.update();
 	
 	socket = io.connect('http://localhost:8080');	// connect the socket to the localhost at port 8080
-	socket.emit('message', {txt: "init()"});			// emit a 'message' where the data is txt:"init()"
+	// socket.emit('message', {txt: "init()"});		// emit a 'message' where the data is txt:"init()"
 
-	socket.on('text_msg', function(data){					// read for a 'text_msg' from server
-		alert(data.msg);
-	});
+	// socket.on('text_msg', function(data){					// read for a 'text_msg' from server
+	// 	alert(data.msg);
+	// });
 
 }
 
@@ -86,9 +86,12 @@ function tick(event)
 	updateHealthTexts();
 	stage.update();
 	
-	// add timestamps to data to promote accuracy
-	//socket.emit('message', {x_val = player.image.x});
-	socket.emit('message', {txt: "tick"});
+	// TODO: add timestamps to data to promote accuracy
+	socket.emit('message_to_server', {x_val: player.image.x, y_val: player.image.y});
+
+	socket.on('message_to_client', function(data){
+		console.log("server sent: " + data);
+	});
 }
 
 function createTexts()
