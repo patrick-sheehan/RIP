@@ -2,6 +2,7 @@ var stage;
 var player;
 var background;
 var canvas;
+var socket;
 
 var playerText;
 var enemy1Text;
@@ -40,6 +41,7 @@ var MAX_POWERUP_TIME = 500;			//set time that player gets it
 var removePlayerPowerup = false;	//so that on each tick it doesn't change image back
 var POWERUP_ODDS = 500;				// "1/this" chance of powerup per tick
 
+
 document.onkeydown = handleKeyDown;
 document.onkeyup = handleKeyUp;
 document.getElementById( "gameCanvas" ).onmousedown = function(event){
@@ -60,6 +62,14 @@ function init()
 	ai = new AI();
 	createTexts();
 	stage.update();
+	
+	socket = io.connect('http://localhost:8080');	// connect the socket to the localhost at port 8080
+	socket.emit('message', {txt: "init()"});			// emit a 'message' where the data is txt:"init()"
+
+	socket.on('text_msg', function(data){					// read for a 'text_msg' from server
+		alert(data.msg);
+	});
+
 }
 
 function tick(event)
@@ -76,7 +86,9 @@ function tick(event)
 	updateHealthTexts();
 	stage.update();
 	
-	this.emit('tick-emit');
+	// add timestamps to data to promote accuracy
+	//socket.emit('message', {x_val = player.image.x});
+	socket.emit('message', {txt: "tick"});
 }
 
 function createTexts()
@@ -143,7 +155,7 @@ function Bullet()
 	var mouseY = stage.mouseY;
 	this.angle = (Math.atan2(mouseY - this.image.y, mouseX - this.image.x)* (180/Math.PI)) - 90;
 
-	console.log("bullet count: " + bulletArray.length);
+	//console.log("bullet count: " + bulletArray.length);
 	stage.addChild(this.image);
 }
 

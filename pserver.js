@@ -5,15 +5,24 @@ var server = require('http').createServer(app);
 var io = require('socket.io').listen(server);
 
 
-io.sockets.on('tick-emit', function() {
-	console.log('heard tick emission');
-});
+io.sockets.on('connection', function(client) {
+	//client.emit('text_msg', {msg: 'welcome to connection'});
 
-io.sockets.on('connection', function(socket) {
-	socket.on('tick', function(data) {
-		console.log('tick message sent');
+	client.on('message', function(data){
+		console.log("****** message: " + data.txt);
 	});
 });
+
+
+// io.sockets.on('tick-emit', function() {
+// 	console.log('heard tick emission');
+// });
+
+// io.sockets.on('connection', function(socket) {
+// 	socket.on('tick', function(data) {
+// 		console.log('tick message sent');
+// 	});
+// });
 
 app.configure(function() {
 	app.use(express.static(__dirname)); //sets the static file location
