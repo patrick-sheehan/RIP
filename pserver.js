@@ -4,33 +4,39 @@ var app = express();    //create our app with express
 var server = require('http').createServer(app);
 var io = require('socket.io').listen(server);
 var playerCount = 0;
+var playerID = 0;
 var roomCount = 0;
+
+// TODO: add array of player IDs
 
 io.sockets.on('connection', function(client) { // client is connected
 
 	playerCount++;
+	playerID++;
 
 	client.on('message_to_server', function(player){ // client sent player data
 		
+		console.log('server received message from client');
+
 		if (player.ID === -1) {
-			player.ID = playerCount;
+			player.ID = playerID;
 		}
 
-		console.log("playerID = " + player.ID);	
-		console.log("player health = " + player.health)
-		console.log("player timestamp: " + player.timestamp);
-		console.log("player position: (" + player.imagex.toFixed(2) + ", " + player.imagey.toFixed(2) + ")");
+		// console.log("playerID = " + player.ID);	
+		// console.log("player timestamp: " + player.timestamp);
+		// console.log("player position: (" + player.x.toFixed(2) + ", " + player.y.toFixed(2) + ")");
+		// console.log("player rotation: " + player.rotation);
 
-
-		// io.sockets.emit('message_to_client', player);
+		io.sockets.emit('message_to_client', player);
 
 	});
 
-	// socket.on('disconnect', function () {	.....  });
+	io.sockets.on('disconnect', function () {	
+		// NOT TESTED
+		playerCount--;
+	});
 
 });
-
-//io.sockets.on disconnection?
 
 app.configure(function() {
 	app.use(express.static(__dirname)); //sets the static file location

@@ -80,7 +80,11 @@ function init()
 	
 	startLobby();
 	
-	socket = io.connect("aggiedev.kd.io:5000");	// connect the socket to the localhost at port 8080
+//**HARD-CODE PLAYER INIT - ERASE THIS
+	//player = new Player();
+
+
+	socket = io.connect("http://localhost:5000");	// connect the socket to the localhost at port 8080
 
 	// socket.emit('message', {txt: "init()"});		// emit a 'message' where the data is txt:"init()"
 
@@ -154,9 +158,10 @@ function tick(event)
 		var currTime = new Date().getTime();
 	
 		// emit all information about player (from Player()) also include a timestamp w/ millisecond precision
-		socket.emit('message_to_server', {timestamp: currTime, ID: player.ID, health: player.health,
-																		imagex: player.image.x, imagey: player.image.y}); 
-																		// iamge.regX: player.image.regX, iamge.regY: player.image.regY });
+		socket.emit('message_to_server', {timestamp: currTime, ID: player.ID,	x: player.image.x, y: player.image.y,
+																			rotation: player.image.rotation }); 
+
+		// TODO: emit bullet data later
 
 
 		socket.on('message_to_client', function(data){
