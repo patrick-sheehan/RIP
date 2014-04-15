@@ -58,7 +58,7 @@ document.getElementById( "gameCanvas" ).onmousedown = function(event){
 };
 
 function init()
-{
+{	// initialize client-side variables
 	canvas = document.getElementById("gameCanvas");
 	stage = new createjs.Stage(canvas);
 	background = new createjs.Bitmap("images/backgrounds/grass-tiled.png");
@@ -77,25 +77,13 @@ function init()
 	{
 		mode = "4player";
 	}
-	
 	startLobby();
 	
-//**HARD-CODE PLAYER INIT - ERASE THIS
-	//player = new Player();
-
-
 	socket = io.connect("http://localhost:5000");	// connect the socket to the localhost at port 8080
-
-	// socket.emit('message', {txt: "init()"});		// emit a 'message' where the data is txt:"init()"
-
-	// socket.on('text_msg', function(data){					// read for a 'text_msg' from server
-	// 	alert(data.msg);
-	// });
-
 }
 
 function startLobby()
-{
+{ // start lobby for initial players waiting for others
 	lobbyText = new createjs.Text("Waiting for players...1 connected...", "bold 34px Comic Sans", "#ffffff");
 	lobbyText.x = (canvas.width / 2) - 260;
 	lobbyText.y = canvas.height / 2;
@@ -103,7 +91,7 @@ function startLobby()
 }
 
 function initialize2player()
-{
+{	// initialize two players (the enemy is a temporary placeholder)
 	player = new Player();
 	first = new Enemy();
 	enemyList.push(first);
@@ -112,7 +100,7 @@ function initialize2player()
 }
 
 function initialize4player()
-{
+{	// initialize four players (enemies is a temporary placeholder)
 	player = new Player();
 	first = new Enemy();
 	second = new Enemy();
@@ -125,23 +113,34 @@ function initialize4player()
 }
 
 function tick(event)
-{
+{ // this function called many times per minute, depending on if the browser tab is active
 	if(!gameActive)
-	{
-		if(Math.floor(Math.random()*200) == 0)
+	{ // conditional true when players are in the lobby
+		var playerNumber = 0;
+		socket.on('player_count', function(data){	// ask server for number of players
+			playerNumber = data.player_count;
+			console.log('client playernumber = ' + playerNumber);
+		});
+
+		lobbyText.text = "Waiting for players..." + playerNumber + " connected...";
+		if(mode === "2player")// && playerNumber === 2)
 		{
-			if(mode == "2player")
-				initialize2player();
-			else
-				initialize4player();
-			
 			gameActive = true;
 			stage.removeChild(lobbyText);
+			initialize2player();
 		}
+			
+		else if(mode === "4player")// && playerNumber === 4)
+		{
+			gameActive = true;
+			stage.removeChild(lobbyText);
+			initialize4player();
+		}
+		
 		stage.update();
 	}
 	else
-	{
+	{ // this block is executed for every tick() function call once the game has started
 		movePlayer();
 		rotatePlayer();
 		if(mousePressed)
@@ -161,7 +160,7 @@ function tick(event)
 		socket.emit('message_to_server', {timestamp: currTime, ID: player.ID,	x: player.image.x, y: player.image.y,
 																			rotation: player.image.rotation }); 
 
-		// TODO: emit bullet data later
+		// TODO: emit bullet data to server
 
 
 		socket.on('message_to_client', function(data){
@@ -172,7 +171,7 @@ function tick(event)
 }
 
 function createTexts(numPlayers)
-{
+{ // show texts to indicate health for each enemy
 	playerText = new createjs.Text("Your Health: 100%", "bold 34px Comic Sans", "#ffffff");
 	enemy1Text = new createjs.Text("Enemy 1 Health: 100%", "bold 34px Comic Sans", "#ffffff");
 	playerText.x = 10;
@@ -197,7 +196,7 @@ function createTexts(numPlayers)
 }
 
 function Player()
-{
+{	// initialize a player
 	this.ID = -1; // will be assigned server-side
 	this.health = 100;
 	this.image = new createjs.Bitmap("images/players/player_1.png");
@@ -210,7 +209,7 @@ function Player()
 }
 
 function Enemy()
-{
+{ // initialize a placeholder enemy
 	this.health = 100;
 	this.image = new createjs.Bitmap("images/players/player_1.png");
 	this.image.x = Math.random()*canvas.width;
@@ -223,7 +222,7 @@ function Enemy()
 }
 
 function Bullet()
-{
+{ // initialize a bullet, these will be stored in an array and passed to the server
 	this.damagable = true;
 
 	this.image = new createjs.Bitmap("images/objects/bullet.png");
@@ -265,8 +264,7 @@ function PowerupIndicator()
 	stage.addChild(this.image);
 }
 function movePlayer()
-{
-	//doing each combination, as if you detect them separately then the player moves sqrt(2) as fast on diagonals
+{	//doing each combination, as if you detect them separately then the player moves sqrt(2) as fast on diagonals
 	if(upPressed && leftPressed)
 	{
 		player.image.y -= movementSpeed / 1.4;
@@ -460,7 +458,7 @@ function moveEnemies()
 }
 
 function moveBullets()
-{
+{ // move the bullets
 	for(var i = 0; i < bulletArray.length; i++)
 	{
 		bulletArray[i].image.x += Math.sin(bulletArray[i].angle*(Math.PI/-180)) * bulletSpeed;
@@ -481,7 +479,7 @@ function moveBullets()
 }
 
 function rotatePlayer()
-{
+{ // rotate the player
 	var mouseX = stage.mouseX;
 	var mouseY = stage.mouseY;
 	var rotationAngle = Math.atan2(mouseY - player.image.y, mouseX - player.image.x);
@@ -489,7 +487,7 @@ function rotatePlayer()
 }
 
 function playerShoot()
-{
+{ // player shoots bullets
 	if(bulletFrameCounter == 0)
 	{
 		var bullet = new Bullet();
@@ -538,7 +536,7 @@ function determinePowerup()
 }
 
 function checkEnemyBulletCollision()
-{
+{ // check if any bullets hit the enemy and update his health
 	var threshhold = 30;
 	for(var j = 0; j < enemyList.length; j++)
 	{
@@ -617,7 +615,7 @@ function checkPowerupCollision()
 }
 
 function updateHealthTexts()
-{
+{ // update the texts that indicate players' healths
 	playerText.text = "Your Health: " + player.health + "%";
 	enemy1Text.text = "Enemy 1 Health: " + enemyList[0].health + "%";
 

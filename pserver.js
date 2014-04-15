@@ -9,29 +9,34 @@ var roomCount = 0;
 
 // TODO: add array of player IDs
 
-io.sockets.on('connection', function(client) { // client is connected
+io.sockets.on('connection', function(client) { // when client is connected
 
 	playerCount++;
 	playerID++;
 
-	client.on('message_to_server', function(player){ // client sent player data
-		
-		console.log('server received message from client');
+	console.log('server playercount = ' + playerCount);
+	
+	io.sockets.emit('player_count', {player_count: playerCount}); // send player count to clients
 
+	client.on('message_to_server', function(player){ // client sent player data to server
+		
 		if (player.ID === -1) {
 			player.ID = playerID;
 		}
 
+		// Below testing that data was transferred properly
 		// console.log("playerID = " + player.ID);	
 		// console.log("player timestamp: " + player.timestamp);
 		// console.log("player position: (" + player.x.toFixed(2) + ", " + player.y.toFixed(2) + ")");
 		// console.log("player rotation: " + player.rotation);
 
+		// Below sends message about each player to all other players
+		// this will be restricted later to avoid excessive data transfers
 		io.sockets.emit('message_to_client', player);
 
 	});
 
-	io.sockets.on('disconnect', function () {	
+	io.sockets.on('disconnect', function () {	// decrement player count upon disconnect
 		// NOT TESTED
 		playerCount--;
 	});
@@ -49,7 +54,7 @@ app.configure(function() {
 	}));
 });
 
-app.get('/', function(req, res){
+app.get('/', function(req, res){ 
   res.sendfile(__dirname + '/index.html');
 });
 
