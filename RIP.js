@@ -6,6 +6,7 @@ var enemy3;
 var background;
 var canvas;
 var socket;
+var gameActive = false;
 
 var mode = "";	//either 2player or 4player
 
@@ -13,6 +14,7 @@ var playerText;
 var enemy1Text;
 var enemy2Text;
 var enemy3Text;
+var lobbyText;
 
 // var ai;
 // var AIMoveCounter = 0;				//counter to count ticks before changing move direction
@@ -70,15 +72,14 @@ function init()
 	if(gameMode)
 	{
 		mode = "2player";
-		initialize2player();
 	}
 	else
 	{
 		mode = "4player";
-		initialize4player();
 	}
 	
-
+	startLobby();
+	
 	socket = io.connect();	// connect the socket to the localhost at port 8080
 
 	// socket.emit('message', {txt: "init()"});		// emit a 'message' where the data is txt:"init()"
@@ -87,6 +88,14 @@ function init()
 	// 	alert(data.msg);
 	// });
 
+}
+
+function startLobby()
+{
+	lobbyText = new createjs.Text("Waiting for players...1 connected...", "bold 34px Comic Sans", "#ffffff");
+	lobbyText.x = (canvas.width / 2) - 260;
+	lobbyText.y = canvas.height / 2;
+	stage.addChild(lobbyText);
 }
 
 function initialize2player()
@@ -113,30 +122,48 @@ function initialize4player()
 
 function tick(event)
 {
-	movePlayer();
-	rotatePlayer();
-	if(mousePressed)
-		playerShoot();
-	moveBullets();
-	determinePowerup();
-	moveEnemies();
-	checkEnemyBulletCollision();
-	checkPowerupCollision();
-	updateHealthTexts();
-	stage.update();
+	if(!gameActive)
+	{
+		if(Math.floor(Math.random()*200) == 0)
+		{
+			if(mode == "2player")
+				initialize2player();
+			else
+				initialize4player();
+			
+			gameActive = true;
+			stage.removeChild(lobbyText);
+		}
+		stage.update();
+	}
+	else
+	{
+		movePlayer();
+		rotatePlayer();
+		if(mousePressed)
+			playerShoot();
+		moveBullets();
+		determinePowerup();
+		moveEnemies();
+		checkEnemyBulletCollision();
+		checkPowerupCollision();
+		updateHealthTexts();
+		stage.update();
 
 
-  var currTime = new Date().getTime();
+		var currTime = new Date().getTime();
 	
-  // emit all information about player (from Player()) also include a timestamp w/ millisecond precision
-	socket.emit('message_to_server', {timestamp: currTime, ID: player.ID, health: player.health,
+		// emit all information about player (from Player()) also include a timestamp w/ millisecond precision
+		socket.emit('message_to_server', {timestamp: currTime, ID: player.ID, health: player.health,
 																		imagex: player.image.x, imagey: player.image.y}); 
 																		// iamge.regX: player.image.regX, iamge.regY: player.image.regY });
 
 
-	socket.on('message_to_client', function(data){
-		console.log("server sent: " + data);
-	});
+		socket.on('message_to_client', function(data){
+			console.log("server sent: " + data);
+		});
+	}
+	
 }
 
 function createTexts(numPlayers)
@@ -512,7 +539,6 @@ function checkEnemyBulletCollision()
 	{
 		for(var i = 0; i < bulletArray.length; i++)
 		{
-			console.log(enemyList.length);
 			if(enemyList[j].health > 0 &&
 				bulletArray[i].image.x > enemyList[j].image.x - threshhold &&
 				bulletArray[i].image.x < enemyList[j].image.x + threshhold &&
