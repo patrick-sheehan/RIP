@@ -9,21 +9,25 @@ var roomCount = 0;
 io.sockets.on('connection', function(client) { // client is connected
 
 	playerCount++;
+
 	client.on('message_to_server', function(player){ // client sent player data
 		
-		if (player.ID == -1) {
+		if (player.ID === -1) {
 			player.ID = playerCount;
 		}
 
-		//console.log('playerID = ' + player.ID);	
-		console.log("player timestamp: " + player.cTimestamp);
-		console.log("player position: (" + player.x_val.toFixed(2) + ", " + player.y_val.toFixed(2) + ")");
-		//console.log("player health: " + player.health);
-		console.log("ET CETERA...\n");
+		console.log("playerID = " + player.ID);	
+		console.log("player health = " + player.health)
+		console.log("player timestamp: " + player.timestamp);
+		console.log("player position: (" + player.imagex.toFixed(2) + ", " + player.imagey.toFixed(2) + ")");
 
-		// io.sockets.emit('message_to_client', 'server received your data') 
-		// TODO: probably use "socket.broadcast.emit()" to send to message to all sockets EXCEPT the sender
+
+		// io.sockets.emit('message_to_client', player);
+
 	});
+
+	// socket.on('disconnect', function () {	.....  });
+
 });
 
 //io.sockets.on disconnection?

@@ -89,9 +89,14 @@ function tick(event)
 	stage.update();
 
 
-  var timestamp = new Date().getTime();
-	socket.emit('message_to_server', {cTimestamp: timestamp, x_val: player.image.x, y_val: player.image.y});
+  var currTime = new Date().getTime();
 	
+  // emit all information about player (from Player()) also include a timestamp w/ millisecond precision
+	socket.emit('message_to_server', {timestamp: currTime, ID: player.ID, health: player.health,
+																		imagex: player.image.x, imagey: player.image.y}); 
+																		// iamge.regX: player.image.regX, iamge.regY: player.image.regY });
+
+
 	socket.on('message_to_client', function(data){
 		console.log("server sent: " + data);
 	});
