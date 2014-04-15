@@ -1,21 +1,28 @@
 var stage;
 var player;
+var enemy1;
+var enemy2;
+var enemy3;
 var background;
 var canvas;
 var socket;
+
+var mode = "";	//either 2player or 4player
 
 var playerText;
 var enemy1Text;
 var enemy2Text;
 var enemy3Text;
 
-var ai;
-var AIMoveCounter = 0;				//counter to count ticks before changing move direction
-var AI_TICKS_TO_CHANGE = 40;			//number of ticks before AI changes move direction, lower numhber = more sporatic movement changes
+// var ai;
+// var AIMoveCounter = 0;				//counter to count ticks before changing move direction
+// var AI_TICKS_TO_CHANGE = 40;			//number of ticks before AI changes move direction, lower numhber = more sporatic movement changes
+
+var enemyList = [];
 
 var upKey = 87;
 var downKey = 83;
-var leftKey = 65; 
+var leftKey = 65;
 var rightKey = 68;
 
 var upPressed;
@@ -58,10 +65,18 @@ function init()
 	createjs.Ticker.addEventListener("tick", tick);
 	stage.addEventListener("stagemousedown", mouseClick);
 	stage.addEventListener("stagemouseup", mouseUnclick);
-	player = new Player();
-	ai = new AI();
-	createTexts();
-	stage.update();
+	
+	var gameMode = confirm("OK = 2 player mode\n\nCancel = 4 player mode");
+	if(gameMode)
+	{
+		mode = "2player";
+		initialize2player();
+	}
+	else
+	{
+		mode = "4player";
+		initialize4player();
+	}
 	
 
 	socket = io.connect('http://localhost:8080');	// connect the socket to the localhost at port 8080
@@ -74,6 +89,28 @@ function init()
 
 }
 
+function initialize2player()
+{
+	player = new Player();
+	first = new Enemy();
+	enemyList.push(first);
+	createTexts(2);
+	stage.update();
+}
+
+function initialize4player()
+{
+	player = new Player();
+	first = new Enemy();
+	second = new Enemy();
+	third = new Enemy();
+	enemyList.push(first);
+	enemyList.push(second);
+	enemyList.push(third);
+	createTexts(4);
+	stage.update();
+}
+
 function tick(event)
 {
 	movePlayer();
@@ -82,8 +119,8 @@ function tick(event)
 		playerShoot();
 	moveBullets();
 	determinePowerup();
-	moveAI();
-	checkAIBulletCollision();
+	moveEnemies();
+	checkEnemyBulletCollision();
 	checkPowerupCollision();
 	updateHealthTexts();
 	stage.update();
@@ -102,26 +139,29 @@ function tick(event)
 	});
 }
 
-function createTexts()
+function createTexts(numPlayers)
 {
 	playerText = new createjs.Text("Your Health: 100%", "bold 34px Comic Sans", "#ffffff");
 	enemy1Text = new createjs.Text("Enemy 1 Health: 100%", "bold 34px Comic Sans", "#ffffff");
-	enemy2Text = new createjs.Text("Enemy 2 Health: 100%", "bold 34px Comic Sans", "#ffffff");
-	enemy3Text = new createjs.Text("Enemy 3 Health: 100%", "bold 34px Comic Sans", "#ffffff");
-
 	playerText.x = 10;
 	playerText.y = 10;
 	enemy1Text.x = canvas.width - 350;
 	enemy1Text.y = 10;
-	enemy2Text.x = 10;
-	enemy2Text.y = canvas.height - 50;
-	enemy3Text.x = canvas.width - 350;
-	enemy3Text.y = canvas.height - 50;
 
 	stage.addChild(playerText);
 	stage.addChild(enemy1Text);
-	stage.addChild(enemy2Text);
-	stage.addChild(enemy3Text);
+	
+	if(numPlayers == 4)
+	{
+		enemy2Text = new createjs.Text("Enemy 2 Health: 100%", "bold 34px Comic Sans", "#ffffff");
+		enemy3Text = new createjs.Text("Enemy 3 Health: 100%", "bold 34px Comic Sans", "#ffffff");
+		enemy2Text.x = 10;
+		enemy2Text.y = canvas.height - 50;
+		enemy3Text.x = canvas.width - 350;
+		enemy3Text.y = canvas.height - 50;
+		stage.addChild(enemy2Text);
+		stage.addChild(enemy3Text);
+	}
 }
 
 function Player()
@@ -137,7 +177,7 @@ function Player()
 	stage.addChild(this.image);
 }
 
-function AI()
+function Enemy()
 {
 	this.health = 100;
 	this.image = new createjs.Bitmap("images/players/player_1.png");
@@ -315,76 +355,76 @@ function movePlayer()
 }
 
 //using AIMoveCounter and AI_TICKS_TO_CHANGE
-function moveAI()
+function moveEnemies()
 {
-	//new move direction
-	if(AIMoveCounter == 0)
-	{
-		//0-7
-		ai.moveDirection = Math.floor(Math.random()*8);
-		AIMoveCounter++;
-	}
-	else if(AIMoveCounter >= AI_TICKS_TO_CHANGE)
-	{
-		AIMoveCounter = 0;
-	}
-	else
-	{
-		AIMoveCounter++;
-	}
+	// //new move direction
+	// if(AIMoveCounter == 0)
+	// {
+		// //0-7
+		// ai.moveDirection = Math.floor(Math.random()*8);
+		// AIMoveCounter++;
+	// }
+	// else if(AIMoveCounter >= AI_TICKS_TO_CHANGE)
+	// {
+		// AIMoveCounter = 0;
+	// }
+	// else
+	// {
+		// AIMoveCounter++;
+	// }
 
-	switch(ai.moveDirection)
-	{
-		case 0:
-			ai.image.x += movementSpeed;
-			break;
-		case 1:
-			ai.image.x -= movementSpeed;
-			break;
-		case 2:
-			ai.image.y += movementSpeed;
-			break;
-		case 3:
-			ai.image.y -= movementSpeed;
-			break;
-		case 4:
-			ai.image.x += movementSpeed / 1.4;
-			ai.image.y += movementSpeed / 1.4;
-			break;
-		case 5:
-			ai.image.x -= movementSpeed / 1.4;
-			ai.image.y -= movementSpeed / 1.4;
-			break;
-		case 6:
-			ai.image.x += movementSpeed / 1.4;
-			ai.image.y -= movementSpeed / 1.4;
-			break;
-		default:
-			ai.image.x -= movementSpeed / 1.4;
-			ai.image.y += movementSpeed / 1.4;
-	}
+	// switch(ai.moveDirection)
+	// {
+		// case 0:
+			// ai.image.x += movementSpeed;
+			// break;
+		// case 1:
+			// ai.image.x -= movementSpeed;
+			// break;
+		// case 2:
+			// ai.image.y += movementSpeed;
+			// break;
+		// case 3:
+			// ai.image.y -= movementSpeed;
+			// break;
+		// case 4:
+			// ai.image.x += movementSpeed / 1.4;
+			// ai.image.y += movementSpeed / 1.4;
+			// break;
+		// case 5:
+			// ai.image.x -= movementSpeed / 1.4;
+			// ai.image.y -= movementSpeed / 1.4;
+			// break;
+		// case 6:
+			// ai.image.x += movementSpeed / 1.4;
+			// ai.image.y -= movementSpeed / 1.4;
+			// break;
+		// default:
+			// ai.image.x -= movementSpeed / 1.4;
+			// ai.image.y += movementSpeed / 1.4;
+	// }
 
-	var threshhold = 50;
-	if(ai.image.x - threshhold < 0)
-	{
-		ai.image.x = threshhold;
-		AIMoveCounter = 0;
-	}
-	if(ai.image.y - threshhold < 0)
-	{
-		ai.image.y = threshhold;
-		AIMoveCounter = 0;
-	}
-	if(ai.image.x + threshhold  > canvas.width)
-	{
-		ai.image.x = canvas.width - threshhold;
-		AIMoveCounter = 0;
-	}
-	if(ai.image.y + threshhold > canvas.height)
-	{
-		ai.image.y = canvas.height - threshhold;
-		AIMoveCounter = 0;
-	}
+	// var threshhold = 50;
+	// if(ai.image.x - threshhold < 0)
+	// {
+		// ai.image.x = threshhold;
+		// AIMoveCounter = 0;
+	// }
+	// if(ai.image.y - threshhold < 0)
+	// {
+		// ai.image.y = threshhold;
+		// AIMoveCounter = 0;
+	// }
+	// if(ai.image.x + threshhold  > canvas.width)
+	// {
+		// ai.image.x = canvas.width - threshhold;
+		// AIMoveCounter = 0;
+	// }
+	// if(ai.image.y + threshhold > canvas.height)
+	// {
+		// ai.image.y = canvas.height - threshhold;
+		// AIMoveCounter = 0;
+	// }
 }
 
 function moveBullets()
@@ -465,44 +505,49 @@ function determinePowerup()
 	}
 }
 
-function checkAIBulletCollision()
+function checkEnemyBulletCollision()
 {
 	var threshhold = 30;
-	for(var i = 0; i < bulletArray.length; i++)
+	for(var j = 0; j < enemyList.length; j++)
 	{
-		if(bulletArray[i].image.x > ai.image.x - threshhold &&
-			bulletArray[i].image.x < ai.image.x + threshhold &&
-			bulletArray[i].image.y > ai.image.y - threshhold &&
-			bulletArray[i].image.y < ai.image.y + threshhold &&
-			bulletArray[i].damagable)
+		for(var i = 0; i < bulletArray.length; i++)
 		{
-			console.log("bullet collision");
-			bulletArray[i].damagable = false;
-			stage.removeChild(bulletArray[i].image);
-			bulletArray.slice(i);
-			ai.health -= BULLET_DAMAGE;
-			if(ai.health <= 0)
+			console.log(enemyList.length);
+			if(enemyList[j].health > 0 &&
+				bulletArray[i].image.x > enemyList[j].image.x - threshhold &&
+				bulletArray[i].image.x < enemyList[j].image.x + threshhold &&
+				bulletArray[i].image.y > enemyList[j].image.y - threshhold &&
+				bulletArray[i].image.y < enemyList[j].image.y + threshhold &&
+				bulletArray[i].damagable)
 			{
-				stage.removeChild(ai.image);
-				delete ai;
-				ai = new AI();
+				console.log("bullet collision");
+				bulletArray[i].damagable = false;
+				stage.removeChild(bulletArray[i].image);
+				bulletArray.slice(i);
+				enemyList[j].health -= BULLET_DAMAGE;
+				if(enemyList[j].health <= 0)
+				{
+					stage.removeChild(enemyList[j].image);
+					//var newEnemy = new Enemy();
+					//enemyList.push(newEnemy);
+				}
 			}
+
+
+			// bulletArray[i].image.x += Math.sin(bulletArray[i].angle*(Math.PI/-180)) * bulletSpeed;
+			// bulletArray[i].image.y += Math.cos(bulletArray[i].angle*(Math.PI/-180)) * bulletSpeed;
+			// bulletArray[i].initialX = bulletArray[i].image.x;
+			// bulletArray[i].initialY = bulletArray[i].image.y;
+
+			// //TODO: this is to prevent memory leak with bullets travelling off the canvas indefinitely, currently causes bug where
+			// //bullet completely stops
+			// if(bulletArray[i].image.x < 0 || bulletArray[i].image.x > canvas.width || bulletArray[i].image.y < 0 || bulletArray[i].image.y > canvas.height)
+			// {
+			// 	var thisBullet = bulletArray[i];
+			// 	//delete thisBullet;
+			// 	//bulletArray = bulletArray.slice(i);
+			// }
 		}
-
-
-		// bulletArray[i].image.x += Math.sin(bulletArray[i].angle*(Math.PI/-180)) * bulletSpeed;
-		// bulletArray[i].image.y += Math.cos(bulletArray[i].angle*(Math.PI/-180)) * bulletSpeed;
-		// bulletArray[i].initialX = bulletArray[i].image.x;
-		// bulletArray[i].initialY = bulletArray[i].image.y;
-
-		// //TODO: this is to prevent memory leak with bullets travelling off the canvas indefinitely, currently causes bug where
-		// //bullet completely stops
-		// if(bulletArray[i].image.x < 0 || bulletArray[i].image.x > canvas.width || bulletArray[i].image.y < 0 || bulletArray[i].image.y > canvas.height)
-		// {
-		// 	var thisBullet = bulletArray[i];
-		// 	//delete thisBullet;
-		// 	//bulletArray = bulletArray.slice(i);
-		// }
 	}
 }
 
@@ -543,9 +588,7 @@ function checkPowerupCollision()
 function updateHealthTexts()
 {
 	playerText.text = "Your Health: " + player.health + "%";
-	enemy1Text.text = "Enemy 1 Health: " + ai.health + "%";
-	//playerText.text = "Your Health: " + player.health + "%";
-	//playerText.text = "Your Health: " + player.health + "%";
+	enemy1Text.text = "Enemy 1 Health: " + enemyList[0].health + "%";
 
 	if(player.health >= 100)
 		playerText.color = "#ffffff";
@@ -560,18 +603,50 @@ function updateHealthTexts()
 	else
 		playerText.color = "#ff0000";
 
-	if(ai.health >= 100)
+	if(enemyList[0].health >= 100)
 		enemy1Text.color = "#ffffff";
-	else if(ai.health > 80)
+	else if(enemyList[0].health > 80)
 		enemy1Text.color = "#ffcccc";
-	else if(ai.health > 60)
+	else if(enemyList[0].health > 60)
 		enemy1Text.color = "#ff9999";
-	else if(ai.health > 40)
+	else if(enemyList[0].health > 40)
 		enemy1Text.color = "#ff6666";
-	else if(ai.health > 20)
+	else if(enemyList[0].health > 20)
 		enemy1Text.color = "#ff3333";
 	else
 		enemy1Text.color = "#ff0000";
+		
+	if(mode == "4player")
+	{
+		enemy2Text.text = "Enemy 2 Health: " + enemyList[1].health + "%";
+		enemy3Text.text = "Enemy 3 Health: " + enemyList[2].health + "%";
+		
+		if(enemyList[1].health >= 100)
+			enemy2Text.color = "#ffffff";
+		else if(enemyList[1].health > 80)
+			enemy2Text.color = "#ffcccc";
+		else if(enemyList[1].health > 60)
+			enemy2Text.color = "#ff9999";
+		else if(enemyList[1].health > 40)
+			enemy2Text.color = "#ff6666";
+		else if(enemyList[1].health > 20)
+			enemy2Text.color = "#ff3333";
+		else
+			enemy2Text.color = "#ff0000";
+			
+		if(enemyList[2].health >= 100)
+			enemy3Text.color = "#ffffff";
+		else if(enemyList[2].health > 80)
+			enemy3Text.color = "#ffcccc";
+		else if(enemyList[2].health > 60)
+			enemy3Text.color = "#ff9999";
+		else if(enemyList[2].health > 40)
+			enemy3Text.color = "#ff6666";
+		else if(enemyList[2].health > 20)
+			enemy3Text.color = "#ff3333";
+		else
+			enemy3Text.color = "#ff0000";
+	}
 }
 
 function mouseClick(canvas, e)
