@@ -79,7 +79,7 @@ function init()
 	}
 	
 
-	socket = io.connect('http://localhost:8080');	// connect the socket to the localhost at port 8080
+	socket = io.connect();	// connect the socket to the localhost at port 8080
 
 	// socket.emit('message', {txt: "init()"});		// emit a 'message' where the data is txt:"init()"
 
