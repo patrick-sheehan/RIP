@@ -1,5 +1,5 @@
 var express = require('express');
-var port = 8080;
+var port = 5000;
 var app = express();    //create our app with express
 var server = require('http').createServer(app);
 var io = require('socket.io').listen(server);
