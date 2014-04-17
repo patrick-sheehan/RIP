@@ -51,6 +51,10 @@ var removePlayerPowerup = false;	//so that on each tick it doesn't change image 
 var POWERUP_ODDS = 500;				// "1/this" chance of powerup per tick
 
 
+var numPlayersHere = 1;
+var numPlayersToStart = 2;
+
+
 document.onkeydown = handleKeyDown;
 document.onkeyup = handleKeyUp;
 document.getElementById( "gameCanvas" ).onmousedown = function(event){
@@ -68,20 +72,129 @@ function init()
 	stage.addEventListener("stagemousedown", mouseClick);
 	stage.addEventListener("stagemouseup", mouseUnclick);
 	
-	var gameMode = confirm("OK = 2 player mode\n\nCancel = 4 player mode");
-	if(gameMode)
-	{
-		mode = "2player";
-	}
-	else
-	{
-		mode = "4player";
-	}
+
+	//TEMPORARILY COMMENTED OUT, FOR DEBUGGING
+	// var gameMode = confirm("OK = 2 player mode\n\nCancel = 4 player mode");
+	// if(gameMode)
+	// {
+	// 	mode = "2player";
+	// 	numPlayersToStart = 2;
+	// }
+	// else
+	// {
+	// 	mode = "4player";
+	// 	numPlayersToStart = 4;
+	// }
+
+//Hard code for debugging
+	player = new Player();
+	numPlayersToStart = 4;
+	console.log("numEnemies = " + enemyList.length);
+//End hard code
+
+
+
 	startLobby();
 	
-	socket = io.connect("http://localhost:5000");	// connect the socket to the localhost at port 8080
+	socket = io.connect("http://localhost:5000");	// connect to the server 
 }
 
+function tick(event)
+{ // this function called many times per minute, more frequent when tab is active in browser
+
+	if(!gameActive)
+	{ // conditional is true when players are in the lobby
+
+		// could request exact number from server, but probably costly
+		// lobbyText.text = "Waiting for " + numPlayersToStart + " total players"; 
+		
+		
+
+		// a new player joined the room
+		socket.on('player_joined', function(data)
+		{
+			// create the new enemy	
+			// TODO: pass parameters to enemy upon creation
+			// var newEnemy = Enemy(data.player_color);
+			numPlayersHere = data.player_count;
+			var diff = numPlayersToStart - numPlayersHere;
+			lobbyText.text = "Waiting for " + diff + " more players. " 
+															+ numPlayersHere + " are connected...";
+
+			// enemyList.push(newEnemy);
+
+			if (numPlayersHere == numPlayersToStart)
+			{	// if there is enough members to start the game
+				console.log("enough to start!");
+				gameActive = true;
+				stage.removeChild(lobbyText);
+				createTexts(numPlayersToStart);
+			}
+			stage.update();
+		});
+
+
+		// if(mode === "2player")// && playerNumber === 2)
+		// {
+		// 	gameActive = true;
+		// 	stage.removeChild(lobbyText);
+		// 	initialize2player();
+		// }
+			
+		// else if(mode === "4player")// && playerNumber === 4)
+		// {
+		// 	gameActive = true;
+		// 	stage.removeChild(lobbyText);
+		// 	initialize4player();
+		// }
+		
+		stage.update();
+	}
+	else
+	{ // this block is executed for every tick() function call once the game has started
+		movePlayer();
+		rotatePlayer();
+		// if(mousePressed)
+		// 	playerShoot();
+		// moveBullets();
+		// determinePowerup();
+		// moveEnemies();
+		// checkEnemyBulletCollision();
+		// checkPowerupCollision();
+		// updateHealthTexts();
+		stage.update();
+
+
+		var currTime = new Date().getTime();
+	
+		// emit all information about this client's player to server
+		// also send a precise timestamp to validate synchronization
+		socket.emit('message_to_server', {timestamp: currTime, health: player.health, 
+										rotation: player.image.rotation, x: player.image.x, y: player.image.y }); 
+
+
+
+		// TODO: emit bullet data to server
+
+
+		socket.on('message_to_client', function(data)
+		{
+			// console.log("server sent: " + data);
+
+		});
+
+		socket.on('disconnect', function()  
+		{
+   
+    });
+	}
+	
+}
+
+function moveEnemies()
+{
+
+}
 function startLobby()
 { // start lobby for initial players waiting for others
 	lobbyText = new createjs.Text("Waiting for players...1 connected...", "bold 34px Comic Sans", "#ffffff");
@@ -112,64 +225,6 @@ function initialize4player()
 	stage.update();
 }
 
-function tick(event)
-{ // this function called many times per minute, depending on if the browser tab is active
-	if(!gameActive)
-	{ // conditional true when players are in the lobby
-		var playerNumber = 0;
-		socket.on('player_count', function(data){	// ask server for number of players
-			playerNumber = data.player_count;
-			console.log('client playernumber = ' + playerNumber);
-		});
-
-		lobbyText.text = "Waiting for players..." + playerNumber + " connected...";
-		if(mode === "2player")// && playerNumber === 2)
-		{
-			gameActive = true;
-			stage.removeChild(lobbyText);
-			initialize2player();
-		}
-			
-		else if(mode === "4player")// && playerNumber === 4)
-		{
-			gameActive = true;
-			stage.removeChild(lobbyText);
-			initialize4player();
-		}
-		
-		stage.update();
-	}
-	else
-	{ // this block is executed for every tick() function call once the game has started
-		movePlayer();
-		rotatePlayer();
-		if(mousePressed)
-			playerShoot();
-		moveBullets();
-		determinePowerup();
-		moveEnemies();
-		checkEnemyBulletCollision();
-		checkPowerupCollision();
-		updateHealthTexts();
-		stage.update();
-
-
-		var currTime = new Date().getTime();
-	
-		// emit all information about player (from Player()) also include a timestamp w/ millisecond precision
-		socket.emit('message_to_server', {timestamp: currTime, ID: player.ID,	x: player.image.x, y: player.image.y,
-																			rotation: player.image.rotation }); 
-
-		// TODO: emit bullet data to server
-
-
-		socket.on('message_to_client', function(data){
-			console.log("server sent: " + data);
-		});
-	}
-	
-}
-
 function createTexts(numPlayers)
 { // show texts to indicate health for each enemy
 	playerText = new createjs.Text("Your Health: 100%", "bold 34px Comic Sans", "#ffffff");
@@ -197,7 +252,6 @@ function createTexts(numPlayers)
 
 function Player()
 {	// initialize a player
-	this.ID = -1; // will be assigned server-side
 	this.health = 100;
 	this.image = new createjs.Bitmap("images/players/player_1.png");
 	this.image.x = Math.random()*canvas.width;
@@ -211,6 +265,7 @@ function Player()
 function Enemy()
 { // initialize a placeholder enemy
 	this.health = 100;
+	// TODO: identify picture with a variable (ie red/blue/green)
 	this.image = new createjs.Bitmap("images/players/player_1.png");
 	this.image.x = Math.random()*canvas.width;
 	this.image.y = Math.random()*canvas.height;
@@ -220,6 +275,46 @@ function Enemy()
 	this.moveDirection = 0;
 	stage.addChild(this.image);
 }
+
+// TODO: Boil these many enemy functions down to only what is needed 
+
+function Enemy(health, x, y, rotation)
+{ // initialize a parameter-specified enemy client-side
+	this.health = health;
+	// TODO: identify picture with a variable (ie red/blue/green)
+	this.image = new createjs.Bitmap("images/players/player_1.png");
+	this.image.x = x;
+	this.image.y = y;
+	//set registration points to center of image
+	this.image.regX = 50;
+	this.image.regY = 50;
+	this.moveDirection = 0;
+	this.image.rotation = rotation;
+	stage.addChild(this.image);
+}
+
+function Enemy(color)
+{
+	this.health = 100;
+	// TODO: identify picture with a variable (ie red/blue/green)
+	if (color === "red")
+	{
+		this.image = new createjs.Bitmap("images/players/player_2.png");
+	}	
+	else
+	{
+		this.image = new createjs.Bitmap("images/players/player_1.png");
+	}
+	this.image.x = Math.random()*canvas.width;
+	this.image.y = Math.random()*canvas.height;
+	//set registration points to center of image
+	this.image.regX = 50;
+	this.image.regY = 50;
+	this.moveDirection = 0;
+	stage.addChild(this.image);
+
+}
+
 
 function Bullet()
 { // initialize a bullet, these will be stored in an array and passed to the server
