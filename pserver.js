@@ -11,7 +11,7 @@ var playerCount = 0;
 var roomCount = 0;
 
 
-var TEMP_ROOM_SIZE = 4;
+var TEMP_ROOM_SIZE = 2;
 
 // an array of sockets to each current client/player
 // this should eliminate need for player ID
@@ -38,16 +38,18 @@ io.sockets.on('connection', function(client)
 	// var color = (playerCount % 2) ? "red" : "green"; // alternate between red/green players
 	// io.sockets.emit('player_joined', {player_count: playerCount, player_color: color});
 
-	// client moved and sent player data to server
+	// a player moved and sent their data to the server
 	client.on('message_to_server', function(player)
 	{ 
+		if (playerCount === TEMP_ROOM_SIZE)
+		{
+			client.emit('full_room_achieved', {numPlayers: TEMP_ROOM_SIZE}); // redundant; but it succeeds to notifies the late joiner
+		}
+
 		// send this player's data to all other players
-		// TODO: this will be restricted later to avoid excessive data transfers
-		// io.sockets.emit('message_to_client', player);
-		// if (playerCount === TEMP_ROOM_SIZE)
-		// {
-		// 	client.emit('full_room_achieved', {numPlayers: TEMP_ROOM_SIZE}); // redundant; but it succeeds to notifies the late joiner
-		// }
+		// TODO: restrict to avoid excessive data transfers
+		io.sockets.emit('message_to_client', player);
+
 	});
 
 	// called when client disconnects. delete the socket.

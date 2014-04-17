@@ -49,7 +49,7 @@ var playerPowerupTime = 0;			//time counter (in ticks) that player can have powe
 var MAX_POWERUP_TIME = 500;			//set time that player gets it
 var removePlayerPowerup = false;	//so that on each tick it doesn't change image back
 var POWERUP_ODDS = 500;				// "1/this" chance of powerup per tick
-
+var TICKER_FPS = 1;			// originally 60
 
 var numPlayersHere = 1;
 
@@ -68,7 +68,7 @@ function init()
 	stage = new createjs.Stage(canvas);
 	background = new createjs.Bitmap("images/backgrounds/grass-tiled.png");
 	stage.addChild(background);
-	createjs.Ticker.setFPS(60);
+	createjs.Ticker.setFPS(TICKER_FPS);
 	createjs.Ticker.addEventListener("tick", tick);
 	stage.addEventListener("stagemousedown", mouseClick);
 	stage.addEventListener("stagemouseup", mouseUnclick);
@@ -95,10 +95,10 @@ function init()
 	startLobby();
 	
 	socket = io.connect("http://localhost:5000");	// connect to the server 
-	// socket.on('player_number', function(data)
-	// {
-	// 	playerID = data.ID;
-	// });
+	socket.on('player_number', function(data)
+	{
+		playerID = data.ID;
+	});
 }
 
 function tick(event)
@@ -115,8 +115,16 @@ function tick(event)
 			stage.removeChild(lobbyText);
 			for (var i = 0; i < room.numPlayers; i++)
 			{
-				var p = new Player();
-				playerArray[i] = p;
+				if (i == playerID)
+				{	// initialize own player
+					player = new Player();
+					playerArray[i] = player;
+				}
+				else
+				{
+					var p = new Player();
+					playerArray[i] = p;
+				}
 				stage.update();
 			}
 			gameActive = true;
@@ -174,11 +182,39 @@ function tick(event)
 	// else
 	if (gameActive)
 	{ // this block is executed for every tick() function call once the game has started
-		// socket.on('message_to_client', function(enemy_data){			
-		// });
 
-		console.log("game is active");
-		// movePlayer();
+		// send this client's data to the server
+		socket.emit('message_to_server', {timestamp: currTime, health: player.health, index: playerID,
+														rotation: player.image.rotation, x: player.image.x, y: player.image.y }); 
+
+
+		socket.on('message_to_client', function(player_data)
+		{
+			// the playerArray now has old data for this player, 
+			// update it with the newer 'player_data' that was passed
+			// updatePlayer(playerArray[player_data.index], player_data);
+			// if (playerArray[player_data.index] != player)
+			// {
+			// 	playerArray[player_data.index].health = player_data.health;
+			// 	playerArray[player_data.index].image.rotation = player_data.rotation;
+			// 	playerArray[player_data.index].image.x = player_data.x;
+			// 	playerArray[player_data.index].image.y = player_data.y;
+			// 	stage.update();
+			// }
+
+			if (player_data.index != undefined && player_data.index != playerID)
+			{
+				playerArray[player_data.index].health = player_data.health;
+				playerArray[player_data.index].image.rotation = player_data.rotation;
+				playerArray[player_data.index].image.x = player_data.x;
+				playerArray[player_data.index].image.y = player_data.y;
+				stage.update();
+			}
+
+		});
+
+		// console.log("game is active");
+		movePlayer();
 		// rotatePlayer();
 		// if(mousePressed)
 		// 	playerShoot();
@@ -194,8 +230,7 @@ function tick(event)
 		var currTime = new Date().getTime();
 		// emit all information about this client's player to server
 		// also send a precise timestamp to validate synchronization
-		// socket.emit('message_to_server', {timestamp: currTime, health: player.health, index: playerID,
-		// 								rotation: player.image.rotation, x: player.image.x, y: player.image.y }); 
+
 
 
 		// socket.on('players', function(playerArray)
@@ -212,6 +247,16 @@ function tick(event)
 		// {
   //   });
 	}
+	stage.update();
+}
+
+function updatePlayer(this_player, newData)
+{
+	console.log("this_player = " + this_player);
+	this_player.health = newData.health;
+	this_player.image.rotation = newData.rotation;
+	this_player.image.x = newData.x;
+	this_player.image.y = newData.y;
 	stage.update();
 }
 
@@ -378,6 +423,7 @@ function PowerupIndicator()
 	
 	stage.addChild(this.image);
 }
+
 function movePlayer()
 {	//doing each combination, as if you detect them separately then the player moves sqrt(2) as fast on diagonals
 	if(upPressed && leftPressed)
