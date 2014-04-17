@@ -52,8 +52,9 @@ var POWERUP_ODDS = 500;				// "1/this" chance of powerup per tick
 
 
 var numPlayersHere = 1;
-var numPlayersToStart = 2;
 
+var playerID;			// start from 0
+var playerArray 	// will include self as well as other opponents
 
 document.onkeydown = handleKeyDown;
 document.onkeyup = handleKeyUp;
@@ -78,60 +79,80 @@ function init()
 	// if(gameMode)
 	// {
 	// 	mode = "2player";
-	// 	numPlayersToStart = 2;
+	// 	roomSize = 2;
 	// }
 	// else
 	// {
 	// 	mode = "4player";
-	// 	numPlayersToStart = 4;
+	// 	roomSize = 4;
 	// }
 
 //Hard code for debugging
-	player = new Player();
-	numPlayersToStart = 4;
+	// player = new Player();
 	console.log("numEnemies = " + enemyList.length);
 //End hard code
-
-
 
 	startLobby();
 	
 	socket = io.connect("http://localhost:5000");	// connect to the server 
+	// socket.on('player_number', function(data)
+	// {
+	// 	playerID = data.ID;
+	// });
 }
 
 function tick(event)
 { // this function called many times per minute, more frequent when tab is active in browser
 
-	if(!gameActive)
-	{ // conditional is true when players are in the lobby
+	socket.emit('message_to_server', {});
+
+	socket.on('full_room_achieved', function(room)
+	{
+		// console.log("receiving full_room_achieved");
+		if (typeof playerArray == 'undefined')
+		{
+			playerArray = new Array();
+			stage.removeChild(lobbyText);
+			for (var i = 0; i < room.numPlayers; i++)
+			{
+				var p = new Player();
+				playerArray[i] = p;
+				stage.update();
+			}
+			gameActive = true;
+		}
+	});
+
+	// if(!gameActive)
+	// { // conditional is true when players are in the lobby
 
 		// could request exact number from server, but probably costly
-		// lobbyText.text = "Waiting for " + numPlayersToStart + " total players"; 
+		// lobbyText.text = "Waiting for " + roomSize + " total players"; 
 		
 		
 
 		// a new player joined the room
-		socket.on('player_joined', function(data)
-		{
-			// create the new enemy	
-			// TODO: pass parameters to enemy upon creation
-			// var newEnemy = Enemy(data.player_color);
-			numPlayersHere = data.player_count;
-			var diff = numPlayersToStart - numPlayersHere;
-			lobbyText.text = "Waiting for " + diff + " more players. " 
-															+ numPlayersHere + " are connected...";
+		// socket.on('player_joined', function(data)
+		// {
+		// 	// create the new enemy	
+		// 	// TODO: pass parameters to enemy upon creation
+		// 	// var newEnemy = Enemy(data.player_color);
+		// 	numPlayersHere = data.player_count;
+		// 	var diff = roomSize - numPlayersHere;
+		// 	lobbyText.text = "Waiting for " + diff + " more players. " 
+		// 													+ numPlayersHere + " are connected...";
 
-			// enemyList.push(newEnemy);
+		// 	// enemyList.push(newEnemy);
 
-			if (numPlayersHere == numPlayersToStart)
-			{	// if there is enough members to start the game
-				console.log("enough to start!");
-				gameActive = true;
-				stage.removeChild(lobbyText);
-				createTexts(numPlayersToStart);
-			}
-			stage.update();
-		});
+		// 	if (numPlayersHere == roomSize)
+		// 	{	// if there is enough members to start the game
+		// 		console.log("enough to start!");
+		// 		gameActive = true;
+		// 		stage.removeChild(lobbyText);
+		// 		createTexts(roomSize);
+		// 	}
+		// 	stage.update();
+		// });
 
 
 		// if(mode === "2player")// && playerNumber === 2)
@@ -148,56 +169,55 @@ function tick(event)
 		// 	initialize4player();
 		// }
 		
-		stage.update();
-	}
-	else
+		// stage.update();
+	// }
+	// else
+	if (gameActive)
 	{ // this block is executed for every tick() function call once the game has started
-		movePlayer();
-		rotatePlayer();
+		// socket.on('message_to_client', function(enemy_data){			
+		// });
+
+		console.log("game is active");
+		// movePlayer();
+		// rotatePlayer();
 		// if(mousePressed)
 		// 	playerShoot();
 		// moveBullets();
 		// determinePowerup();
 		// moveEnemies();
 		// checkEnemyBulletCollision();
-		// checkPowerupCollision();
+		//checkPowerupCollision();
 		// updateHealthTexts();
 		stage.update();
 
 
 		var currTime = new Date().getTime();
-	
 		// emit all information about this client's player to server
 		// also send a precise timestamp to validate synchronization
-		socket.emit('message_to_server', {timestamp: currTime, health: player.health, 
-										rotation: player.image.rotation, x: player.image.x, y: player.image.y }); 
+		// socket.emit('message_to_server', {timestamp: currTime, health: player.health, index: playerID,
+		// 								rotation: player.image.rotation, x: player.image.x, y: player.image.y }); 
 
 
-
+		// socket.on('players', function(playerArray)
+		// {
+		// 	console.log(playerArray);
+		// });
 		// TODO: emit bullet data to server
 
+		// socket.on('message_to_client', function(player)
+		// {	
 
-		socket.on('message_to_client', function(data)
-		{
-			// console.log("server sent: " + data);
-
-		});
-
-		socket.on('disconnect', function()  
-		{
-   
-    });
+		// });
+		// socket.on('disconnect', function()  
+		// {
+  //   });
 	}
-	
+	stage.update();
 }
 
-function moveEnemies()
-{
-
-}
 function startLobby()
 { // start lobby for initial players waiting for others
-	lobbyText = new createjs.Text("Waiting for players...1 connected...", "bold 34px Comic Sans", "#ffffff");
+	lobbyText = new createjs.Text("Waiting for players...", "bold 34px Comic Sans", "#ffffff");
 	lobbyText.x = (canvas.width / 2) - 260;
 	lobbyText.y = canvas.height / 2;
 	stage.addChild(lobbyText);
