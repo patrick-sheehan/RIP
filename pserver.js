@@ -23,8 +23,10 @@ io.sockets.on('connection', function(client) { // client is connected
 
 
 		// io.sockets.emit('message_to_client', player);
+		
 
 	});
+	
 
 	// socket.on('disconnect', function () {	.....  });
 
