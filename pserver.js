@@ -6,6 +6,7 @@ var app = express();    //create our app with express
 var server = require('http').createServer(app);
 var io = require('socket.io').listen(server);
 
+
 // server-side game variables
 var playerCount = 0;
 var roomCount = 0;
@@ -26,7 +27,7 @@ io.sockets.on('connection', function(client)
 	playerArray.push(client);
 	client.emit('player_number', {ID: playerCount});
 	playerCount++;
-	console.log('server playercount incremented to:' + playerCount);
+	console.log('server playercount incremented to: ' + playerCount);
 	if (playerCount === TEMP_ROOM_SIZE)
 	{
 		console.log("emitting full_room_achieved, players = " + TEMP_ROOM_SIZE);
@@ -47,7 +48,7 @@ io.sockets.on('connection', function(client)
 		}
 
 		// send this player's data to all other players
-		// TODO: restrict to avoid excessive data transfers
+		// TODO: restrict to avoid excessive data transfersds	
 		io.sockets.emit('message_to_client', player);
 
 	});
