@@ -33,12 +33,6 @@ io.sockets.on('connection', function(client)
 	playerCount++;
  	console.log("server's count incremented to: " + playerCount);
 
-	// if (playerCount === TEMP_ROOM_SIZE)
-	// {
-	// 	console.log("emitting full_room_achieved, players = " + TEMP_ROOM_SIZE);
-	// 	io.sockets.emit('full_room_achieved', {numPlayers: TEMP_ROOM_SIZE});
-	// }
-	
 	client.on('check_lobby_full', function()
 	{ // let client know if the room is full yet
 		if (playerCount === TEMP_ROOM_SIZE)
@@ -50,20 +44,14 @@ io.sockets.on('connection', function(client)
 	// a player moved and sent their data to the server
 	client.on('message_to_server', function(player)
 	{ 
-		if (playerCount === TEMP_ROOM_SIZE)
-		{
-			client.emit('full_room_achieved', {numPlayers: TEMP_ROOM_SIZE}); // redundant; but it succeeds to notifies the late joiner
-		}
-
 		// send this player's data to all other players
 		// TODO: restrict to avoid excessive data transfersds	
-		io.sockets.emit('message_to_client', player, bulletArray);
+		io.sockets.emit('data_to_client', player, bulletArray);
 
 	});
 	client.on('move_bullets', function()
 	{	// update position of all bullets
 		moveBullets();
-		io.sockets.emit('bullets_moved', bulletArray, bulletArray.length);
 	});
 	client.on('new_bullet', function(bullet)
 	{ // add new bullet to the server-maintained array
@@ -113,14 +101,20 @@ function moveBullets()
 	{
 		var b = bulletArray[i];
 
+		if (b.speed == -1)
+		{	// this bullet was flagged last message, remove it now
+			bulletArray.splice(i, 1);
+		}
 		b.image.x += Math.sin(b.angle*(Math.PI/-180)) * b.speed;
 		b.image.y += Math.cos(b.angle*(Math.PI/-180)) * b.speed;
 
 		// delete bullet from array when exceed canvas bounds
-		if(bulletArray[i].x < 0 || bulletArray[i].x > canvasWidth || bulletArray[i].y < 0 || bulletArray[i].y > canvasHeight)
+		if(b.image.x < 0 || b.image.x > canvasWidth || b.image.y < 0 || b.image.y > canvasHeight)
 		{
-			// TODO: remove this bullet from client side; currently only done on server array
-			bulletArray.splice(i, 1);
+			// flag this bullet that is now out of range
+			// server-side: remove it next time this function is called
+			// client-side: remove this bullet's image from stage
+			b.speed = -1;
 		}
 	}
 }

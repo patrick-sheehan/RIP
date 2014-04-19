@@ -49,7 +49,7 @@ var playerPowerupTime = 0;			//time counter (in ticks) that player can have powe
 var MAX_POWERUP_TIME = 500;			//set time that player gets it
 var removePlayerPowerup = false;	//so that on each tick it doesn't change image back
 var POWERUP_ODDS = 500;				// "1/this" chance of powerup per tick
-var TICKER_FPS = 1;			// originally 60
+var TICKER_FPS = 60;			// originally 60
 
 var numPlayersHere = 1;
 
@@ -120,13 +120,14 @@ function tick(event)
 		player.timestamp = currTime;
 		socket.emit('message_to_server', player);
 
-		socket.on('message_to_client', function(player_data, bullets)
+		socket.on('data_to_client', function(player_data, bullets)
 		{	// the playerArray now has old data for this player, 
 			// update it with the newer 'player_data' that was passed
 			if (player_data.playerID != undefined && player_data.playerID != playerID)
 			{
 				updatePlayer(playerArray[player_data.playerID], player_data);
 			}
+			updateBullets(bullets);
 		});
 
 		movePlayer();
@@ -134,14 +135,8 @@ function tick(event)
 		if(mousePressed)
 			playerShoot();
 
-
 		// moveBullets();
 		socket.emit('move_bullets');
-
-		socket.on('bullets_moved', function(sBulletArray, numBullets)
-		{
-			updateBullets(sBulletArray);
-		});
 
 
 		// determinePowerup();
@@ -149,7 +144,6 @@ function tick(event)
 		// checkEnemyBulletCollision();
 		// checkPowerupCollision();
 		// updateHealthTexts();
-		stage.update();
 
 		// socket.on('disconnect', function(){});
 	}
@@ -208,15 +202,31 @@ function updateBullets(serverBullets)
 	{		
 		var servBullet = serverBullets[i];
 
-		if (bulletArray[i] == undefined)
-		{
-			bulletArray[i] = new Bullet(servBullet.speed, servBullet.image.x, servBullet.image.y, servBullet.angle);
+		if (typeof bulletArray[i] === 'undefined')
+		{	// add new bullet to client array if needed
+			// alert("adding new bullet at i = " + i + " bullArr.len = " + bulletArray.length);
+			var b = new Bullet(servBullet.timestamp, servBullet.speed, servBullet.image.x, servBullet.image.y, servBullet.angle);
+			bulletArray[i] = b;
+			stage.addChild(b.image);
 		}
 		else
-		{
+		{	// if a bullet exists at this index
 			var cliBullet = bulletArray[i];
-			cliBullet.image.x = servBullet.image.x;
-			cliBullet.image.y = servBullet.image.y;
+			
+			// update bullet location
+			cliBullet.speed = servBullet.speed;
+
+			if (cliBullet.speed == -1)
+			{
+				stage.removeChild(cliBullet.image);
+				bulletArray.splice(i, 1);
+			}
+			else
+			{
+				cliBullet.image.x = servBullet.image.x;
+				cliBullet.image.y = servBullet.image.y;
+				cliBullet.angle = servBullet.angle;
+			}
 		}
 	}
 }
@@ -309,12 +319,17 @@ function Enemy()
 	stage.addChild(this.image);
 }
 
-function Bullet(speed, x, y, angle)
+function Bullet(timestamp, speed, x, y, angle)
 { // initialize a bullet, these will be stored in an array and passed to the server
 	// all parameters are optional. Used when creating a new bullet created by another client
 	
-	var currTime = new Date().getTime();
-	this.timestamp = currTime;
+	if (typeof timestamp !== "undefined") { this.timestamp = timestamp; }
+	else 
+	{ 
+			var currTime = new Date().getTime();
+			this.timestamp = currTime; 
+	}
+
 
 	this.damagable = true;
 	if (typeof speed !== "undefined") { this.speed = speed; }
@@ -342,7 +357,7 @@ function Bullet(speed, x, y, angle)
 	this.angle = (Math.atan2(mouseY - this.image.y, mouseX - this.image.x)* (180/Math.PI)) - 90;
 
 	//console.log("bullet count: " + bulletArray.length);
-	stage.addChild(this.image);
+	// stage.addChild(this.image);
 }
 
 function Powerup()
@@ -592,7 +607,6 @@ function rotatePlayer()
 
 function playerShoot()
 { // player shot a bullet
-	console.log("player shot");
 	if(bulletFrameCounter == 0)
 	{
 		// create a bullet and send it's data to server
