@@ -9,17 +9,19 @@ var io = require('socket.io').listen(server);
 
 // server-side game variables
 var playerCount = 0;
+var bulletCount = 0; 
 var roomCount = 0;
-
+var bulletSpeed = 5;
 
 var TEMP_ROOM_SIZE = 2;
 
 // an array of sockets to each current client/player
 // this should eliminate need for player ID
 var playerArray = [];
-
+var bulletArray = [];
 
 // TODO: array of rooms, where each room is an array of 4 client sockets
+
 
 // received a connection from a client
 io.sockets.on('connection', function(client) 
@@ -27,13 +29,13 @@ io.sockets.on('connection', function(client)
 	playerArray.push(client);
 	client.emit('player_number', {ID: playerCount});
 	playerCount++;
-	console.log('server playercount incremented to: ' + playerCount);
+ 	console.log('server playercount incremented to: ' + playerCount);
 	if (playerCount === TEMP_ROOM_SIZE)
 	{
 		console.log("emitting full_room_achieved, players = " + TEMP_ROOM_SIZE);
 		io.sockets.emit('full_room_achieved', {numPlayers: TEMP_ROOM_SIZE});
 	}
-	// console.log('server playercount incremented to:' + playerCount);
+	
 		
 	// notify clients that a new player joined
 	// var color = (playerCount % 2) ? "red" : "green"; // alternate between red/green players
@@ -49,10 +51,20 @@ io.sockets.on('connection', function(client)
 
 		// send this player's data to all other players
 		// TODO: restrict to avoid excessive data transfersds	
-		io.sockets.emit('message_to_client', player);
+		io.sockets.emit('message_to_client', player, bulletArray);
 
 	});
-
+	client.on('move_bullets', function()
+	{
+		moveBullets();
+		io.sockets.emit('bullets_moved', bulletArray, bulletArray.length);
+	});
+	client.on('new_bullet', function(bullet)
+	{
+		bulletArray.push(bullet);
+		bulletCount++;
+		// io.sockets.emit('bullet_added', bullet, bulletCount);
+	});
 	// called when client disconnects. delete the socket.
 	client.on('disconnect', function ()
 	{	
@@ -83,3 +95,23 @@ server.listen(port, function()
 {
 	console.log("App listening on port " + port);
 });
+
+
+function moveBullets()
+{ // move the bullets
+	for(var i = 0; i < bulletArray.length; i++)
+	{
+		var b = bulletArray[i];
+
+		b.image.x += Math.sin(b.angle*(Math.PI/-180)) * b.speed;
+		b.image.y += Math.cos(b.angle*(Math.PI/-180)) * b.speed;
+
+		// TODO: pass canvas width/height
+		// delete bullet when out of canvas
+		if(bulletArray[i].x < 0 || bulletArray[i].x > canvas.width || bulletArray[i].y < 0 || bulletArray[i].y > canvas.height)
+		{
+			bulletArray.splice(i, 1);
+		}
+	}
+}
+

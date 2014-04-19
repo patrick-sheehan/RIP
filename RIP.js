@@ -49,7 +49,7 @@ var playerPowerupTime = 0;			//time counter (in ticks) that player can have powe
 var MAX_POWERUP_TIME = 500;			//set time that player gets it
 var removePlayerPowerup = false;	//so that on each tick it doesn't change image back
 var POWERUP_ODDS = 500;				// "1/this" chance of powerup per tick
-var TICKER_FPS = 5;			// originally 60
+var TICKER_FPS = 1;			// originally 60
 
 var numPlayersHere = 1;
 
@@ -90,12 +90,13 @@ function init()
 
 //Hard code for debugging
 	// player = new Player();
-	console.log("numEnemies = " + enemyList.length);
+	// console.log("numEnemies = " + enemyList.length);
 //End hard code
 
 	startLobby();
 	
 	socket = io.connect("http://localhost:5000");	// connect to the server 
+
 	socket.on('player_number', function(data)
 	{
 		playerID = data.ID;
@@ -104,7 +105,6 @@ function init()
 
 function tick(event)
 { // this function called many times per minute, more frequent when tab is active in browser
-
 	socket.emit('message_to_server', {});
 
 	socket.on('full_room_achieved', function(room)
@@ -188,12 +188,13 @@ function tick(event)
 		var currTime = new Date().getTime();
 		player.timestamp = currTime;
 		player.playerID = playerID;
-		player.image.toJSON = function(){
+		player.image.toJSON = function()
+		{
 			return { x: player.image.x, y: player.image.y, rotation: player.image.rotation };
 		};
 		socket.emit('message_to_server', player);
 
-		socket.on('message_to_client', function(player_data)
+		socket.on('message_to_client', function(player_data, bullets)
 		{	// the playerArray now has old data for this player, 
 			// update it with the newer 'player_data' that was passed
 			if (player_data.playerID != undefined && player_data.playerID != playerID)
@@ -206,37 +207,52 @@ function tick(event)
 		rotatePlayer();
 		if(mousePressed)
 			playerShoot();
-		moveBullets();
+
+		socket.on('bullet_added', function(bullet, bulletCount)
+		{
+			// bulletArray.push(bullet);
+			// bulletArray.push(new Bullet(bullet.speed, bullet.image.x, bullet.image.y, bullet.angle));
+			// console.log("client received bullet_added. new length = " + bulletArray.length);
+		});
+
+		socket.emit('move_bullets');
+		// moveBullets();
+		socket.on('bullets_moved', function(sBulletArray, numBullets)
+		{
+			updateBullets(sBulletArray);
+		});
+
+
 		// determinePowerup();
 		// moveEnemies();
 		// checkEnemyBulletCollision();
-		//checkPowerupCollision();
+		// checkPowerupCollision();
 		// updateHealthTexts();
 		stage.update();
 
-
-		// emit all information about this client's player to server
-		// also send a precise timestamp to validate synchronization
-
-
-
-		// socket.on('players', function(playerArray)
-		// {
-		// 	console.log(playerArray);
-		// });
-		// TODO: emit bullet data to server
-
-		// socket.on('message_to_client', function(player)
-		// {	
-
-		// });
-		// socket.on('disconnect', function()  
-		// {
-  //   });
+		// socket.on('disconnect', function(){});
 	}
 	stage.update();
 }
 
+function updateBullets(serverBullets)
+{
+	for (var i = 0; i < serverBullets.length; i++)
+	{		
+		var servBullet = serverBullets[i];
+
+		if (bulletArray[i] == undefined)
+		{
+			bulletArray[i] = new Bullet(servBullet.speed, servBullet.image.x, servBullet.image.y, servBullet.angle);
+		}
+		else
+		{
+			var cliBullet = bulletArray[i];
+			cliBullet.image.x = servBullet.image.x;
+			cliBullet.image.y = servBullet.image.y;
+		}
+	}
+}
 function updatePlayer(this_player, newData)
 {
 	this_player.health = newData.health;
@@ -366,18 +382,33 @@ function Enemy(color)
 }
 
 
-function Bullet()
+function Bullet(speed, x, y, angle)
 { // initialize a bullet, these will be stored in an array and passed to the server
+	// all parameters are optional. Used when creating a new bullet created by another client
+	
+	var currTime = new Date().getTime();
+	this.timestamp = currTime;
+
 	this.damagable = true;
+	if (typeof speed !== "undefined") { this.speed = speed; }
+	else { this.speed = bulletSpeed; }
 
 	this.image = new createjs.Bitmap("images/objects/bullet.png");
 	this.image.regX = 2;
 	this.image.regY = 2;
-	this.image.x = player.image.x;
-	this.image.y = player.image.y;
+
+	if (typeof x !== "undefined") { this.image.x = x; }
+	else { this.image.x = player.image.x; }
+
+	if (typeof y !== "undefined") { this.image.y = y; }
+	else { this.image.y = player.image.y; }
+	
 	this.initialX = this.image.x;
 	this.initialY = this.image.y;
-	this.angle = player.image.rotation;
+
+	if (typeof angle !== "undefined") { this.angle = angle; }
+	else { this.angle = player.image.rotation; }
+
 
 	var mouseX = stage.mouseX;
 	var mouseY = stage.mouseY;
@@ -633,11 +664,19 @@ function rotatePlayer()
 }
 
 function playerShoot()
-{ // player shoots bullets
+{ // player shot a bullet
 	if(bulletFrameCounter == 0)
 	{
+		// create a bullet and send it's data to server
+
 		var bullet = new Bullet();
-		bulletArray.push(bullet);
+		// bulletArray.push(bullet);
+
+		bullet.image.toJSON = function()
+		{
+			return {x: bullet.image.x, y: bullet.image.y};
+		}
+		socket.emit('new_bullet', bullet);
 	}
 	bulletFrameCounter++;
 	if(bulletFrameCounter > currentBulletFireRate)
