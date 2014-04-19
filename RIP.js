@@ -105,93 +105,19 @@ function init()
 
 function tick(event)
 { // this function called many times per minute, more frequent when tab is active in browser
-	socket.emit('message_to_server', {});
-
-	socket.on('full_room_achieved', function(room)
-	{
-		// console.log("receiving full_room_achieved");
-		if (typeof playerArray == 'undefined')
-		{
-			playerArray = new Array();
-			stage.removeChild(lobbyText);
-			for (var i = 0; i < room.numPlayers; i++)
-			{
-				if (i == playerID)
-				{	// initialize own player
-					player = new Player();
-					playerArray[i] = player;
-				}
-				else
-				{
-					var p = new Player();
-					playerArray[i] = p;
-				}
-				stage.update();
-			}
-			gameActive = true;
-		}
-	});
-
-	// if(!gameActive)
-	// { // conditional is true when players are in the lobby
-
-		// could request exact number from server, but probably costly
-		// lobbyText.text = "Waiting for " + roomSize + " total players"; 
-		
-		
-
-		// a new player joined the room
-		// socket.on('player_joined', function(data)
-		// {
-		// 	// create the new enemy	
-		// 	// TODO: pass parameters to enemy upon creation
-		// 	// var newEnemy = Enemy(data.player_color);
-		// 	numPlayersHere = data.player_count;
-		// 	var diff = roomSize - numPlayersHere;
-		// 	lobbyText.text = "Waiting for " + diff + " more players. " 
-		// 													+ numPlayersHere + " are connected...";
-
-		// 	// enemyList.push(newEnemy);
-
-		// 	if (numPlayersHere == roomSize)
-		// 	{	// if there is enough members to start the game
-		// 		console.log("enough to start!");
-		// 		gameActive = true;
-		// 		stage.removeChild(lobbyText);
-		// 		createTexts(roomSize);
-		// 	}
-		// 	stage.update();
-		// });
-
-
-		// if(mode === "2player")// && playerNumber === 2)
-		// {
-		// 	gameActive = true;
-		// 	stage.removeChild(lobbyText);
-		// 	initialize2player();
-		// }
-			
-		// else if(mode === "4player")// && playerNumber === 4)
-		// {
-		// 	gameActive = true;
-		// 	stage.removeChild(lobbyText);
-		// 	initialize4player();
-		// }
-		
-		// stage.update();
-	// }
-	// else
+	
 	if (gameActive)
 	{ // this block is executed for every tick() function call once the game has started
 
 		// send this client's data to the server
-		var currTime = new Date().getTime();
-		player.timestamp = currTime;
+		
 		player.playerID = playerID;
 		player.image.toJSON = function()
 		{
 			return { x: player.image.x, y: player.image.y, rotation: player.image.rotation };
 		};
+		var currTime = new Date().getTime();
+		player.timestamp = currTime;
 		socket.emit('message_to_server', player);
 
 		socket.on('message_to_client', function(player_data, bullets)
@@ -208,15 +134,10 @@ function tick(event)
 		if(mousePressed)
 			playerShoot();
 
-		socket.on('bullet_added', function(bullet, bulletCount)
-		{
-			// bulletArray.push(bullet);
-			// bulletArray.push(new Bullet(bullet.speed, bullet.image.x, bullet.image.y, bullet.angle));
-			// console.log("client received bullet_added. new length = " + bulletArray.length);
-		});
 
-		socket.emit('move_bullets');
 		// moveBullets();
+		socket.emit('move_bullets');
+
 		socket.on('bullets_moved', function(sBulletArray, numBullets)
 		{
 			updateBullets(sBulletArray);
@@ -231,6 +152,52 @@ function tick(event)
 		stage.update();
 
 		// socket.on('disconnect', function(){});
+	}
+	else 	// if (!gameActive)
+	{ // conditional when players are in the lobby
+
+		// could request exact number from server, but probably costly
+		// lobbyText.text = "Waiting for " + roomSize + " total players"; 
+		
+		socket.emit('check_lobby_full');
+
+		socket.on('full_room_achieved', function(room)
+		{
+			if (typeof playerArray == 'undefined')
+			{
+				playerArray = new Array();
+				stage.removeChild(lobbyText);
+				for (var i = 0; i < room.numPlayers; i++)
+				{
+					if (i == playerID)
+					{	// initialize own player
+						player = new Player();
+						playerArray[i] = player;
+					}
+					else
+					{
+						var p = new Player();
+						playerArray[i] = p;
+					}
+				}
+				socket.emit('canvas_size', canvas.height, canvas.width);
+				gameActive = true;
+			}
+		});
+
+		// if(mode === "2player")// && playerNumber === 2)
+		// {
+		// 	gameActive = true;
+		// 	stage.removeChild(lobbyText);
+		// 	initialize2player();
+		// }
+			
+		// else if(mode === "4player")// && playerNumber === 4)
+		// {
+		// 	gameActive = true;
+		// 	stage.removeChild(lobbyText);
+		// 	initialize4player();
+		// }
 	}
 	stage.update();
 }
@@ -341,46 +308,6 @@ function Enemy()
 	this.moveDirection = 0;
 	stage.addChild(this.image);
 }
-
-// TODO: Boil these many enemy functions down to only what is needed 
-
-function Enemy(health, x, y, rotation)
-{ // initialize a parameter-specified enemy client-side
-	this.health = health;
-	// TODO: identify picture with a variable (ie red/blue/green)
-	this.image = new createjs.Bitmap("images/players/player_1.png");
-	this.image.x = x;
-	this.image.y = y;
-	//set registration points to center of image
-	this.image.regX = 50;
-	this.image.regY = 50;
-	this.moveDirection = 0;
-	this.image.rotation = rotation;
-	stage.addChild(this.image);
-}
-
-function Enemy(color)
-{
-	this.health = 100;
-	// TODO: identify picture with a variable (ie red/blue/green)
-	if (color === "red")
-	{
-		this.image = new createjs.Bitmap("images/players/player_2.png");
-	}	
-	else
-	{
-		this.image = new createjs.Bitmap("images/players/player_1.png");
-	}
-	this.image.x = Math.random()*canvas.width;
-	this.image.y = Math.random()*canvas.height;
-	//set registration points to center of image
-	this.image.regX = 50;
-	this.image.regY = 50;
-	this.moveDirection = 0;
-	stage.addChild(this.image);
-
-}
-
 
 function Bullet(speed, x, y, angle)
 { // initialize a bullet, these will be stored in an array and passed to the server
@@ -665,10 +592,10 @@ function rotatePlayer()
 
 function playerShoot()
 { // player shot a bullet
+	console.log("player shot");
 	if(bulletFrameCounter == 0)
 	{
 		// create a bullet and send it's data to server
-
 		var bullet = new Bullet();
 		// bulletArray.push(bullet);
 
