@@ -15,6 +15,8 @@ var bulletCount = 0;
 var roomCount = 0;
 var bulletSpeed = 5;
 
+var BULLET_DAMAGE = 20;				//damage each bullet does. player's health starts at 100
+var BULLET_THRESHHOLD = 30;
 var TEMP_ROOM_SIZE = 2;
 
 // an array of sockets to each current client/player
@@ -41,37 +43,47 @@ io.sockets.on('connection', function(client)
 		}
 	});
 
+	client.on('canvas_size', function(height, width)
+	{	// set/expand canvas size (to delete out-of-bounds bullets)
+		canvasHeight = (height > canvasHeight) ? height : canvasHeight;
+		canvasWidth = (width > canvasWidth) ? width : canvasWidth;
+	});
+
 	// a player moved and sent their data to the server
 	client.on('message_to_server', function(player)
 	{ 
 		// send this player's data to all other players
 		// TODO: restrict to avoid excessive data transfersds	
 		io.sockets.emit('data_to_client', player, bulletArray);
-
 	});
+
 	client.on('move_bullets', function()
 	{	// update position of all bullets
 		moveBullets();
 	});
+
 	client.on('new_bullet', function(bullet)
 	{ // add new bullet to the server-maintained array
 		bulletArray.push(bullet);
 		bulletCount++;
 	});
-	client.on('canvas_size', function(height, width)
-	{	// set/expand canvas size (to delete out-of-bounds bullets)
-		canvasHeight = (height > canvasHeight) ? height : canvasHeight;
-		canvasWidth = (width > canvasWidth) ? width : canvasWidth;
+
+	client.on('checkBulletCollision', function(player)
+	{	// check if any bullets hit the player of the client who sent this message
+		var damage = checkBulletCollision(player);
+		if (damage > 0)
+			client.emit('damage_taken', damage);
 	});
-	// called when client disconnects. delete the socket.
+
 	client.on('disconnect', function ()
-	{	
+	{	// called when client disconnects. delete the socket.
 		playerCount--;
 		var i = playerArray.indexOf(client);
 		delete playerArray[i];
 		console.log('server playercount decremented to:' + playerCount);
 		// TODO: client-side: handle when another player leaves
 	});
+
 });
 
 app.configure(function() 
@@ -93,7 +105,6 @@ server.listen(port, function()
 {
 	console.log("App listening on port " + port);
 });
-
 
 function moveBullets()
 { // update all bullet positions in the server-maintained array
@@ -119,3 +130,30 @@ function moveBullets()
 	}
 }
 
+function checkBulletCollision(player)
+{ // check if any bullets hit the enemy and update his health
+	// var playerIndex = playerArray.indexOf(playerID);
+	// var p = playerArray[playerIndex];
+
+	var totalDamage = 0;
+
+	for(var i = 0; i < bulletArray.length; i++)
+	{
+		var bullet = bulletArray[i];
+		if(player.health > 0 && bullet.damagable && 
+				bullet.shooterID != player.playerID &&
+				bullet.image.x > player.image.x - BULLET_THRESHHOLD &&
+				bullet.image.x < player.image.x + BULLET_THRESHHOLD &&
+				bullet.image.y > player.image.y - BULLET_THRESHHOLD &&
+				bullet.image.y < player.image.y + BULLET_THRESHHOLD)
+		{
+			bullet.damagable = false;
+
+			// flag this one so it will be removed later in server's moveBullets() and client's updateBullets()
+			bullet.speed = -1;	
+
+			totalDamage += BULLET_DAMAGE;
+		}
+	}
+	return totalDamage;
+}

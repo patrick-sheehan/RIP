@@ -107,17 +107,20 @@ function tick(event)
 { // this function called many times per minute, more frequent when tab is active in browser
 	
 	if (gameActive)
-	{ // this block is executed for every tick() function call once the game has started
+	{ // the game has started
 
-		// send this client's data to the server
-		
-		player.playerID = playerID;
+// DELETE 
+		// player.playerID = playerID; handled when room filled
+
 		player.image.toJSON = function()
-		{
+		{	// TODO: move this function somewhere else? to when player is created?
 			return { x: player.image.x, y: player.image.y, rotation: player.image.rotation };
 		};
+
 		var currTime = new Date().getTime();
 		player.timestamp = currTime;
+
+		// send this client's data to the server
 		socket.emit('message_to_server', player);
 
 		socket.on('data_to_client', function(player_data, bullets)
@@ -139,8 +142,24 @@ function tick(event)
 		socket.emit('move_bullets');
 
 
+// TODO: move this to server-side. server should decide when a powerup
+		// 	is generated, then message the clients that it is there. The first
+		//	player to get it makes it disappear and unavailable to others
+		//
 		// determinePowerup();
-		// moveEnemies();
+
+
+		// moveEnemies(); 		// not needed; only for AI
+
+
+		socket.emit('checkBulletCollision', player);
+		socket.on('damage_taken', function(damage)
+		{
+			player.health -= damage;
+			if (player.health <= 0)
+				stage.removeChild(player.image);
+		});
+
 		// checkEnemyBulletCollision();
 		// checkPowerupCollision();
 		// updateHealthTexts();
@@ -148,11 +167,8 @@ function tick(event)
 		// socket.on('disconnect', function(){});
 	}
 	else 	// if (!gameActive)
-	{ // conditional when players are in the lobby
+	{ // game has not started yet
 
-		// could request exact number from server, but probably costly
-		// lobbyText.text = "Waiting for " + roomSize + " total players"; 
-		
 		socket.emit('check_lobby_full');
 
 		socket.on('full_room_achieved', function(room)
@@ -166,6 +182,7 @@ function tick(event)
 					if (i == playerID)
 					{	// initialize own player
 						player = new Player();
+						player.playerID = playerID;
 						playerArray[i] = player;
 					}
 					else
@@ -204,8 +221,8 @@ function updateBullets(serverBullets)
 
 		if (typeof bulletArray[i] === 'undefined')
 		{	// add new bullet to client array if needed
-			// alert("adding new bullet at i = " + i + " bullArr.len = " + bulletArray.length);
-			var b = new Bullet(servBullet.timestamp, servBullet.speed, servBullet.image.x, servBullet.image.y, servBullet.angle);
+			var b = new Bullet(servBullet.timestamp, servBullet.speed, servBullet.image.x, 
+													servBullet.image.y, servBullet.angle, servBullet.shooterID);
 			bulletArray[i] = b;
 			stage.addChild(b.image);
 		}
@@ -226,16 +243,24 @@ function updateBullets(serverBullets)
 				cliBullet.image.x = servBullet.image.x;
 				cliBullet.image.y = servBullet.image.y;
 				cliBullet.angle = servBullet.angle;
+				cliBullet.shooterID = servBullet.shooterID;
 			}
 		}
 	}
 }
 function updatePlayer(this_player, newData)
 {
-	this_player.health = newData.health;
-	this_player.image.rotation = newData.image.rotation;
-	this_player.image.x = newData.image.x;
-	this_player.image.y = newData.image.y;
+	if (newData.health > 0) 
+	{
+		this_player.health = newData.health;
+		this_player.image.rotation = newData.image.rotation;
+		this_player.image.x = newData.image.x;
+		this_player.image.y = newData.image.y;
+	}
+	else
+	{
+		stage.removeChild(this_player.image);
+	}
 }
 
 function startLobby()
@@ -248,24 +273,24 @@ function startLobby()
 
 function initialize2player()
 {	// initialize two players (the enemy is a temporary placeholder)
-	player = new Player();
-	first = new Enemy();
-	enemyList.push(first);
-	createTexts(2);
-	stage.update();
+	// player = new Player();
+	// first = new Enemy();
+	// enemyList.push(first);
+	// createTexts(2);
+	// stage.update();
 }
 
 function initialize4player()
 {	// initialize four players (enemies is a temporary placeholder)
-	player = new Player();
-	first = new Enemy();
-	second = new Enemy();
-	third = new Enemy();
-	enemyList.push(first);
-	enemyList.push(second);
-	enemyList.push(third);
-	createTexts(4);
-	stage.update();
+	// player = new Player();
+	// first = new Enemy();
+	// second = new Enemy();
+	// third = new Enemy();
+	// enemyList.push(first);
+	// enemyList.push(second);
+	// enemyList.push(third);
+	// createTexts(4);
+	// stage.update();
 }
 
 function createTexts(numPlayers)
@@ -307,29 +332,28 @@ function Player()
 
 function Enemy()
 { // initialize a placeholder enemy
-	this.health = 100;
-	// TODO: identify picture with a variable (ie red/blue/green)
-	this.image = new createjs.Bitmap("images/players/player_1.png");
-	this.image.x = Math.random()*canvas.width;
-	this.image.y = Math.random()*canvas.height;
-	//set registration points to center of image
-	this.image.regX = 50;
-	this.image.regY = 50;
-	this.moveDirection = 0;
-	stage.addChild(this.image);
+	// this.health = 100;
+	// // TODO: identify picture with a variable (ie red/blue/green)
+	// this.image = new createjs.Bitmap("images/players/player_1.png");
+	// this.image.x = Math.random()*canvas.width;
+	// this.image.y = Math.random()*canvas.height;
+	// //set registration points to center of image
+	// this.image.regX = 50;
+	// this.image.regY = 50;
+	// this.moveDirection = 0;
+	// stage.addChild(this.image);
 }
 
-function Bullet(timestamp, speed, x, y, angle)
+function Bullet(timestamp, speed, x, y, angle, shooterID)
 { // initialize a bullet, these will be stored in an array and passed to the server
 	// all parameters are optional. Used when creating a new bullet created by another client
 	
 	if (typeof timestamp !== "undefined") { this.timestamp = timestamp; }
 	else 
 	{ 
-			var currTime = new Date().getTime();
-			this.timestamp = currTime; 
+		var currTime = new Date().getTime();
+		this.timestamp = currTime; 
 	}
-
 
 	this.damagable = true;
 	if (typeof speed !== "undefined") { this.speed = speed; }
@@ -351,13 +375,13 @@ function Bullet(timestamp, speed, x, y, angle)
 	if (typeof angle !== "undefined") { this.angle = angle; }
 	else { this.angle = player.image.rotation; }
 
+	if (typeof shooterID !== "undefined") { this.shooterID = shooterID; }
+	else { this.shooterID = playerID; }
 
 	var mouseX = stage.mouseX;
 	var mouseY = stage.mouseY;
 	this.angle = (Math.atan2(mouseY - this.image.y, mouseX - this.image.x)* (180/Math.PI)) - 90;
 
-	//console.log("bullet count: " + bulletArray.length);
-	// stage.addChild(this.image);
 }
 
 function Powerup()
