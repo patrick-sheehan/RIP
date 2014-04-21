@@ -54,38 +54,21 @@ io.sockets.on('connection', function(client)
 
 	// a player moved and sent their data to the server
 	client.on('message_to_server', function(player)
-	{ 
-		// send this player's data to all other players
+	{ // send this player's data to all other players
 		// TODO: restrict to avoid excessive data transfers
 
 		playerArray[player.playerID] = player;
-		console.log("playerArray: " + JSON.stringify(playerArray ));
+		
 		moveBullets();
 		checkBulletCollision();
-		
-		io.sockets.emit('data_to_client', playerArray, bulletArray);
-	});
 
-	client.on('move_bullets', function()
-	{	// update position of all bullets
-		moveBullets();
+		io.sockets.emit('data_to_client', playerArray, bulletArray, healthArray);
 	});
 
 	client.on('new_bullet', function(bullet)
 	{ // add new bullet to the server-maintained array
 		bulletArray.push(bullet);
 		bulletCount++;
-	});
-
-	client.on('checkBulletCollision', function(player)
-	{	// check if any bullets hit the player of the client who sent this message
-		var damage = checkBulletCollision(player);
-		if (damage > 0)
-		{
-			player.health -= damage;
-			io.sockets.emit('data_to_client', player, bulletArray);
-		}
-			// client.emit('damage_taken', damage);
 	});
 
 	client.on('disconnect', function ()
@@ -150,17 +133,20 @@ function checkBulletCollision()
 	{
 		for(var i = 0; i < bulletArray.length; i++)
 		{
-			if(playerArray[j].health > 0 &&
-				bulletArray[i].image.x > playerArray[j].image.x - threshhold &&
-				bulletArray[i].image.x < playerArray[j].image.x + threshhold &&
-				bulletArray[i].image.y > playerArray[j].image.y - threshhold &&
-				bulletArray[i].image.y < playerArray[j].image.y + threshhold &&
-				bulletArray[i].damagable)
+			var player = playerArray[j]
+			var bullet = bulletArray[i];
+			if(healthArray[i] > 0 && bullet.damagable &&
+				bullet.shooterID != player.playerID &&
+				bullet.image.x > player.image.x - threshhold &&
+				bullet.image.x < player.image.x + threshhold &&
+				bullet.image.y > player.image.y - threshhold &&
+				bullet.image.y < player.image.y + threshhold)
 			{
 				console.log("bullet collision");
-				bulletArray[i].damagable = false;
-				bulletArray[i].speed = -1;
-				playerArray[j].health -= BULLET_DAMAGE;
+				bullet.damagable = false;
+				bullet.speed = -1;
+				healthArray[j] -= BULLET_DAMAGE;
+				// player.health -= BULLET_DAMAGE;
 			}
 		}
 	}

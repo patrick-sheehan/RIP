@@ -89,11 +89,6 @@ function init()
 	// 	roomSize = 4;
 	// }
 
-//Hard code for debugging
-	// player = new Player();
-	// console.log("numEnemies = " + enemyList.length);
-//End hard code
-
 	startLobby();
 	
 	socket = io.connect("http://localhost:5000");	// connect to the server 
@@ -121,21 +116,11 @@ function tick(event)
 		// send this client's data to the server
 		socket.emit('message_to_server', player);
 
-		// socket.on('data_to_client', function(player_data, bullets)
-		// {	// the playerArray now has old data for this player, 
-		// 	// update it with the newer 'player_data' that was passed
-		// 	if (player_data.playerID != undefined && player_data.playerID != playerID)
-		// 	{
-		// 		updatePlayer(playerArray[player_data.playerID], player_data);
-		// 	}
-		// 	updateBullets(bullets);
-		// });
-		
-
-		socket.on('data_to_client', function(players, bullets)
-		{	
-			updatePlayers(players);
+		socket.on('data_to_client', function(players, bullets, healths)
+		{	// server-side sends updated array of players, bullets, and player's healths
+			updatePlayers(players, healths);
 			updateBullets(bullets);
+			updateHealthTexts(healths);
 		});
 
 
@@ -143,9 +128,6 @@ function tick(event)
 		rotatePlayer();
 		if(mousePressed)
 			playerShoot();
-
-		// moveBullets();
-		// socket.emit('move_bullets');
 
 
 // TODO: move this to server-side. server should decide when a powerup
@@ -155,29 +137,8 @@ function tick(event)
 		// determinePowerup();
 
 
-		// moveEnemies(); 		// not needed; only for AI
-
-
-		// checkEnemyBulletCollision();
-
-
-
-		// socket.emit('checkBulletCollision', player);		
-		// socket.on('damage_taken', function(damage)
-		// {
-		// 	player.health -= damage;
-		// 	if (player.health <= 0)
-		// 		stage.removeChild(player.image);
-		// 	socket.emit('message_to_server', player);
-		// });
-
 // TODO: move to server-side
 		// checkPowerupCollision();
-
-
-
-		updateHealthTexts();
-
 
 // TODO: handle client-side on disconnect
 		// socket.on('disconnect', function(){});
@@ -266,37 +227,21 @@ function updateBullets(serverBullets)
 	}
 }
 
-function updatePlayers(players)
+function updatePlayers(players, healths)
 {
 	for (var i = 0; i < players.length; i++)
 	{
 		var newPlayer = players[i];
 		var oldPlayer = playerArray[i];
 
-		if (newPlayer.health <= 0) 
+		if (healths[i] <= 0) 
 			stage.removeChild(oldPlayer.image);
 		else if (i != playerID)
 		{
-			oldPlayer.health = newPlayer.health;
 			oldPlayer.image.rotation = newPlayer.image.rotation;
 			oldPlayer.image.x = newPlayer.image.x;
 			oldPlayer.image.y = newPlayer.image.y;
 		}
-	}
-}
-
-function updatePlayer(this_player, newData)
-{
-	if (newData.health > 0) 
-	{
-		this_player.health = newData.health;
-		this_player.image.rotation = newData.image.rotation;
-		this_player.image.x = newData.image.x;
-		this_player.image.y = newData.image.y;
-	}
-	else
-	{
-		stage.removeChild(this_player.image);
 	}
 }
 
@@ -363,7 +308,7 @@ function createTexts()
 
 function Player()
 {	// initialize a player
-	this.health = 100;
+	// this.health = 100;
 	this.image = new createjs.Bitmap("images/players/player_1.png");
 	this.image.x = Math.random()*canvas.width;
 	this.image.y = Math.random()*canvas.height;
@@ -898,15 +843,15 @@ function checkPowerDownCollision()
 //	}
 }
 
-function updateHealthTexts()
+function updateHealthTexts(healths)
 { // update the texts that indicate players' healths
 	// playerText.text = "Your Health: " + player.health + "%";
 	// enemy1Text.text = "Enemy 1 Health: " + enemyList[0].health + "%";
 
-	for (var i = 0; i < healthTextArray.length; i ++)
+	for (var i = 0; i < healths.length; i ++)
 	{
 		var thisPlayer = playerArray[i];
-		var h = thisPlayer.health;
+		var h = healths[i];
 		var healthText = healthTextArray[i]
 
 		if(h >= 100) healthText.color = "#ffffff";
@@ -914,7 +859,8 @@ function updateHealthTexts()
 		else if(h > 60) healthText.color = "#ff9999";
 		else if(h > 40) healthText.color = "#ff6666";
 		else if(h > 20) healthText.color = "#ff3333";
-		else healthText.color = "#ff0000";
+		else if(h > 0) healthText.color = "#ff0000";
+		else stage.removeChild(healthText);
 
 		if (player.playerID == i)
 		{
