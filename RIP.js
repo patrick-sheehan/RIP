@@ -395,6 +395,28 @@ function Powerup()
 	stage.addChild(this.image);
 }
 
+function PowerDown()
+{
+	this.image = new createjs.Bitmap("image/backgrounds/grass_frozen.png");
+	this.image.regX = 30;
+	this.image.regY = 30;
+	this.image.x = canvas.width / 3;
+	this.image.y = canvas.height / 3;
+
+	stage.addChild(this.image);
+}
+
+function PowerDownIndicator()
+{
+	this.image = new createjs.Bitmap("image/players/player_3.png");
+	this.image.regX = 30;
+	this.image.regY = 30;
+	this.image.x = player.image.x;
+	this.image.y = player.image.y;
+
+	stage.addChild(this.image);
+}
+
 function PowerupIndicator()
 {
 	this.image = new createjs.Bitmap("images/effects/powerupBlueRing.png");
@@ -685,6 +707,38 @@ function determinePowerup()
 	}
 }
 
+function determinePowerDown()
+{
+	//1/2000 chance per tick for powerup *LIES!*
+		powerup = new Powerup();
+//TODO: Replace with a "while on" instead of a "countdown"
+	if(playerPowerupTime > 0)
+	{
+		playerPowerupTime --;
+	}
+//TODO: Replace with a "if off" instead of "powerup time is over"
+	if (playerPowerupTime == 0 && removePlayerPowerup)		//player powerup time is over
+	{
+		var originalX = player.image.x;
+		var originalY = player.image.y;
+
+		removePlayerPowerup = false;
+		
+		//stage.removeChild(player.image);
+		//player.image = new createjs.Bitmap("images/players/player_1.png");
+		//player.image.regX = 50;
+		//player.image.regY = 50;
+		//player.image.x = originalX;
+		//player.image.y = originalY;
+		//stage.addChild(player.image);
+
+		stage.removeChild(powerRing.image);
+		
+		
+		currentBulletFireRate = BULLET_FIRERATE_NORMAL;
+	}
+}
+
 function checkEnemyBulletCollision()
 { // check if any bullets hit the enemy and update his health
 	var threshhold = 30;
@@ -762,6 +816,40 @@ function checkPowerupCollision()
 			currentBulletFireRate = BULLET_FIREREATE_POWERUP;
 		}
 	}
+}
+
+function checkPowerDownCollision()
+{
+	var threshhold = 30; 	//# of pixels from center of player to powerup boundaries
+	//if(powerupExists && playerPowerupTime == 0)
+	//{
+		if((player.image.x + threshhold) > (powerup.image.x - 23) && (player.image.x - threshhold) < (powerup.image.x + 23)
+			&& (player.image.y + threshhold) > (powerup.image.y - 23) && (player.image.y - threshhold) < (powerup.image.y + 23))
+		{
+			var originalX = player.image.x;
+			var originalY = player.image.y;
+
+			powerRing = new PowerupIndicator();
+			
+			/*
+			stage.removeChild(player.image);
+			player.image = new createjs.Bitmap("images/effects/playerWithPowerup.png");
+			player.image.regX = 50;
+			player.image.regY = 50;
+			player.image.x = originalX;
+			player.image.y = originalY;
+			stage.addChild(player.image);
+			*/
+			
+			stage.removeChild(powerup.image);
+			
+			
+			powerupExists = false;
+			removePlayerPowerup = true;
+			playerPowerupTime = MAX_POWERUP_TIME;
+			currentBulletFireRate = BULLET_FIREREATE_POWERUP;
+		}
+//	}
 }
 
 function updateHealthTexts()
