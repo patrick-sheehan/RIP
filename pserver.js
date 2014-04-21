@@ -22,6 +22,7 @@ var TEMP_ROOM_SIZE = 2;
 // an array of sockets to each current client/player
 // this should eliminate need for player ID
 var playerArray = [];
+var healthArray = [];
 var bulletArray = [];
 
 // TODO: array of rooms, where each room is an array of 4 client sockets
@@ -33,6 +34,7 @@ io.sockets.on('connection', function(client)
 	playerArray.push(client);
 	client.emit('player_number', {ID: playerCount});
 	playerCount++;
+	healthArray.push(100);
  	console.log("server's count incremented to: " + playerCount);
 
 	client.on('check_lobby_full', function()
@@ -53,7 +55,16 @@ io.sockets.on('connection', function(client)
 	client.on('message_to_server', function(player)
 	{ 
 		// send this player's data to all other players
-		// TODO: restrict to avoid excessive data transfersds	
+		// TODO: restrict to avoid excessive data transfers
+		moveBullets();
+		var damage = checkBulletCollision(player);
+		if (damage > 0)
+		{
+			// player.health -= damage;
+			client.emit('damage_taken', damage);
+			// io.sockets.emit('data_to_client', player, bulletArray);
+		}
+		
 		io.sockets.emit('data_to_client', player, bulletArray);
 	});
 
@@ -72,7 +83,11 @@ io.sockets.on('connection', function(client)
 	{	// check if any bullets hit the player of the client who sent this message
 		var damage = checkBulletCollision(player);
 		if (damage > 0)
-			client.emit('damage_taken', damage);
+		{
+			player.health -= damage;
+			io.sockets.emit('data_to_client', player, bulletArray);
+		}
+			// client.emit('damage_taken', damage);
 	});
 
 	client.on('disconnect', function ()

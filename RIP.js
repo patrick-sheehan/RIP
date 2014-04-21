@@ -56,6 +56,7 @@ var numPlayersHere = 1;
 var playerID;			// start from 0
 var playerArray; 	// will include self as well as other opponents
 var timestamp;
+var healthTextArray = [];
 
 document.onkeydown = handleKeyDown;
 document.onkeyup = handleKeyUp;
@@ -109,9 +110,6 @@ function tick(event)
 	if (gameActive)
 	{ // the game has started
 
-// DELETE 
-		// player.playerID = playerID; handled when room filled
-
 		player.image.toJSON = function()
 		{	// TODO: move this function somewhere else? to when player is created?
 			return { x: player.image.x, y: player.image.y, rotation: player.image.rotation };
@@ -139,7 +137,7 @@ function tick(event)
 			playerShoot();
 
 		// moveBullets();
-		socket.emit('move_bullets');
+		// socket.emit('move_bullets');
 
 
 // TODO: move this to server-side. server should decide when a powerup
@@ -152,18 +150,30 @@ function tick(event)
 		// moveEnemies(); 		// not needed; only for AI
 
 
-		socket.emit('checkBulletCollision', player);
+		// checkEnemyBulletCollision();
+
+
+
+		// socket.emit('checkBulletCollision', player);		
+
+
 		socket.on('damage_taken', function(damage)
 		{
 			player.health -= damage;
 			if (player.health <= 0)
 				stage.removeChild(player.image);
+			socket.emit('message_to_server', player);
 		});
 
-		// checkEnemyBulletCollision();
+// TODO: move to server-side
 		// checkPowerupCollision();
-		// updateHealthTexts();
 
+
+
+		updateHealthTexts();
+
+
+// TODO: handle client-side on disconnect
 		// socket.on('disconnect', function(){});
 	}
 	else 	// if (!gameActive)
@@ -193,6 +203,7 @@ function tick(event)
 				}
 				socket.emit('canvas_size', canvas.height, canvas.width);
 				gameActive = true;
+				createTexts();
 			}
 		});
 
@@ -222,7 +233,7 @@ function updateBullets(serverBullets)
 		if (typeof bulletArray[i] === 'undefined')
 		{	// add new bullet to client array if needed
 			var b = new Bullet(servBullet.timestamp, servBullet.speed, servBullet.image.x, 
-													servBullet.image.y, servBullet.angle, servBullet.shooterID);
+										servBullet.image.y, servBullet.angle, servBullet.shooterID, servBullet.damagable);
 			bulletArray[i] = b;
 			stage.addChild(b.image);
 		}
@@ -293,28 +304,34 @@ function initialize4player()
 	// stage.update();
 }
 
-function createTexts(numPlayers)
+function createTexts()
 { // show texts to indicate health for each enemy
-	playerText = new createjs.Text("Your Health: 100%", "bold 34px Comic Sans", "#ffffff");
-	enemy1Text = new createjs.Text("Enemy 1 Health: 100%", "bold 34px Comic Sans", "#ffffff");
+
+	playerText = new createjs.Text("Health: 100%", "bold 34px Comic Sans", "#ffffff");
 	playerText.x = 10;
 	playerText.y = 10;
+	stage.addChild(playerText);
+	healthTextArray.push(playerText);
+
+	enemy1Text = new createjs.Text("Health: 100%", "bold 34px Comic Sans", "#ffffff");
 	enemy1Text.x = canvas.width - 350;
 	enemy1Text.y = 10;
-
-	stage.addChild(playerText);
 	stage.addChild(enemy1Text);
-	
-	if(numPlayers == 4)
+	healthTextArray.push(enemy1Text);
+
+	if(playerArray.length == 4)
 	{
-		enemy2Text = new createjs.Text("Enemy 2 Health: 100%", "bold 34px Comic Sans", "#ffffff");
-		enemy3Text = new createjs.Text("Enemy 3 Health: 100%", "bold 34px Comic Sans", "#ffffff");
+		enemy2Text = new createjs.Text("Health: 100%", "bold 34px Comic Sans", "#ffffff");
 		enemy2Text.x = 10;
 		enemy2Text.y = canvas.height - 50;
+		stage.addChild(enemy2Text);
+		healthTextArray.push(enemy2Text);
+
+		enemy3Text = new createjs.Text("Health: 100%", "bold 34px Comic Sans", "#ffffff");
 		enemy3Text.x = canvas.width - 350;
 		enemy3Text.y = canvas.height - 50;
-		stage.addChild(enemy2Text);
 		stage.addChild(enemy3Text);
+		healthTextArray.push(enemy3Text);
 	}
 }
 
@@ -344,7 +361,7 @@ function Enemy()
 	// stage.addChild(this.image);
 }
 
-function Bullet(timestamp, speed, x, y, angle, shooterID)
+function Bullet(timestamp, speed, x, y, angle, shooterID, damagable)
 { // initialize a bullet, these will be stored in an array and passed to the server
 	// all parameters are optional. Used when creating a new bullet created by another client
 	
@@ -355,7 +372,9 @@ function Bullet(timestamp, speed, x, y, angle, shooterID)
 		this.timestamp = currTime; 
 	}
 
-	this.damagable = true;
+	if (typeof damagable !== "undefined") { this.damagable = damagable; }
+	else { this.damagable = true; }
+
 	if (typeof speed !== "undefined") { this.speed = speed; }
 	else { this.speed = bulletSpeed; }
 
@@ -709,14 +728,14 @@ function determinePowerup()
 
 function determinePowerDown()
 {
-	//1/2000 chance per tick for powerup *LIES!*
+	// 1/2000 chance per tick for powerup *LIES!*
 		powerup = new Powerup();
-//TODO: Replace with a "while on" instead of a "countdown"
+// TODO: Replace with a "while on" instead of a "countdown"
 	if(playerPowerupTime > 0)
 	{
 		playerPowerupTime --;
 	}
-//TODO: Replace with a "if off" instead of "powerup time is over"
+// TODO: Replace with a "if off" instead of "powerup time is over"
 	if (playerPowerupTime == 0 && removePlayerPowerup)		//player powerup time is over
 	{
 		var originalX = player.image.x;
@@ -854,66 +873,90 @@ function checkPowerDownCollision()
 
 function updateHealthTexts()
 { // update the texts that indicate players' healths
-	playerText.text = "Your Health: " + player.health + "%";
-	enemy1Text.text = "Enemy 1 Health: " + enemyList[0].health + "%";
+	// playerText.text = "Your Health: " + player.health + "%";
+	// enemy1Text.text = "Enemy 1 Health: " + enemyList[0].health + "%";
 
-	if(player.health >= 100)
-		playerText.color = "#ffffff";
-	else if(player.health > 80)
-		playerText.color = "#ffcccc";
-	else if(player.health > 60)
-		playerText.color = "#ff9999";
-	else if(player.health > 40)
-		playerText.color = "#ff6666";
-	else if(player.health > 20)
-		playerText.color = "#ff3333";
-	else
-		playerText.color = "#ff0000";
-
-	if(enemyList[0].health >= 100)
-		enemy1Text.color = "#ffffff";
-	else if(enemyList[0].health > 80)
-		enemy1Text.color = "#ffcccc";
-	else if(enemyList[0].health > 60)
-		enemy1Text.color = "#ff9999";
-	else if(enemyList[0].health > 40)
-		enemy1Text.color = "#ff6666";
-	else if(enemyList[0].health > 20)
-		enemy1Text.color = "#ff3333";
-	else
-		enemy1Text.color = "#ff0000";
-		
-	if(mode == "4player")
+	for (var i = 0; i < healthTextArray.length; i ++)
 	{
-		enemy2Text.text = "Enemy 2 Health: " + enemyList[1].health + "%";
-		enemy3Text.text = "Enemy 3 Health: " + enemyList[2].health + "%";
-		
-		if(enemyList[1].health >= 100)
-			enemy2Text.color = "#ffffff";
-		else if(enemyList[1].health > 80)
-			enemy2Text.color = "#ffcccc";
-		else if(enemyList[1].health > 60)
-			enemy2Text.color = "#ff9999";
-		else if(enemyList[1].health > 40)
-			enemy2Text.color = "#ff6666";
-		else if(enemyList[1].health > 20)
-			enemy2Text.color = "#ff3333";
+		var thisPlayer = playerArray[i];
+		var h = thisPlayer.health;
+		var healthText = healthTextArray[i]
+
+		if(h >= 100) healthText.color = "#ffffff";
+		else if(h > 80) healthText.color = "#ffcccc";
+		else if(h > 60) healthText.color = "#ff9999";
+		else if(h > 40) healthText.color = "#ff6666";
+		else if(h > 20) healthText.color = "#ff3333";
+		else healthText.color = "#ff0000";
+
+		if (player.playerID == i)
+		{
+			healthText.text = "Your Health: " + h + "%";
+		}
 		else
-			enemy2Text.color = "#ff0000";
-			
-		if(enemyList[2].health >= 100)
-			enemy3Text.color = "#ffffff";
-		else if(enemyList[2].health > 80)
-			enemy3Text.color = "#ffcccc";
-		else if(enemyList[2].health > 60)
-			enemy3Text.color = "#ff9999";
-		else if(enemyList[2].health > 40)
-			enemy3Text.color = "#ff6666";
-		else if(enemyList[2].health > 20)
-			enemy3Text.color = "#ff3333";
-		else
-			enemy3Text.color = "#ff0000";
+		{
+			healthText.text = "Enemy " + (i + 1) + " Health: " + h + "%";
+		}
 	}
+
+
+	// if(player.health >= 100)
+	// 	playerText.color = "#ffffff";
+	// else if(player.health > 80)
+	// 	playerText.color = "#ffcccc";
+	// else if(player.health > 60)
+	// 	playerText.color = "#ff9999";
+	// else if(player.health > 40)
+	// 	playerText.color = "#ff6666";
+	// else if(player.health > 20)
+	// 	playerText.color = "#ff3333";
+	// else
+	// 	playerText.color = "#ff0000";
+
+	// if(enemyList[0].health >= 100)
+	// 	enemy1Text.color = "#ffffff";
+	// else if(enemyList[0].health > 80)
+	// 	enemy1Text.color = "#ffcccc";
+	// else if(enemyList[0].health > 60)
+	// 	enemy1Text.color = "#ff9999";
+	// else if(enemyList[0].health > 40)
+	// 	enemy1Text.color = "#ff6666";
+	// else if(enemyList[0].health > 20)
+	// 	enemy1Text.color = "#ff3333";
+	// else
+	// 	enemy1Text.color = "#ff0000";
+		
+	// if(mode == "4player")
+	// {
+	// 	enemy2Text.text = "Enemy 2 Health: " + enemyList[1].health + "%";
+	// 	enemy3Text.text = "Enemy 3 Health: " + enemyList[2].health + "%";
+		
+	// 	if(enemyList[1].health >= 100)
+	// 		enemy2Text.color = "#ffffff";
+	// 	else if(enemyList[1].health > 80)
+	// 		enemy2Text.color = "#ffcccc";
+	// 	else if(enemyList[1].health > 60)
+	// 		enemy2Text.color = "#ff9999";
+	// 	else if(enemyList[1].health > 40)
+	// 		enemy2Text.color = "#ff6666";
+	// 	else if(enemyList[1].health > 20)
+	// 		enemy2Text.color = "#ff3333";
+	// 	else
+	// 		enemy2Text.color = "#ff0000";
+			
+	// 	if(enemyList[2].health >= 100)
+	// 		enemy3Text.color = "#ffffff";
+	// 	else if(enemyList[2].health > 80)
+	// 		enemy3Text.color = "#ffcccc";
+	// 	else if(enemyList[2].health > 60)
+	// 		enemy3Text.color = "#ff9999";
+	// 	else if(enemyList[2].health > 40)
+	// 		enemy3Text.color = "#ff6666";
+	// 	else if(enemyList[2].health > 20)
+	// 		enemy3Text.color = "#ff3333";
+	// 	else
+	// 		enemy3Text.color = "#ff0000";
+	// }
 }
 
 function mouseClick(canvas, e)
