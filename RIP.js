@@ -121,15 +121,23 @@ function tick(event)
 		// send this client's data to the server
 		socket.emit('message_to_server', player);
 
-		socket.on('data_to_client', function(player_data, bullets)
-		{	// the playerArray now has old data for this player, 
-			// update it with the newer 'player_data' that was passed
-			if (player_data.playerID != undefined && player_data.playerID != playerID)
-			{
-				updatePlayer(playerArray[player_data.playerID], player_data);
-			}
+		// socket.on('data_to_client', function(player_data, bullets)
+		// {	// the playerArray now has old data for this player, 
+		// 	// update it with the newer 'player_data' that was passed
+		// 	if (player_data.playerID != undefined && player_data.playerID != playerID)
+		// 	{
+		// 		updatePlayer(playerArray[player_data.playerID], player_data);
+		// 	}
+		// 	updateBullets(bullets);
+		// });
+		
+
+		socket.on('data_to_client', function(players, bullets)
+		{	
+			updatePlayers(players);
 			updateBullets(bullets);
 		});
+
 
 		movePlayer();
 		rotatePlayer();
@@ -155,15 +163,13 @@ function tick(event)
 
 
 		// socket.emit('checkBulletCollision', player);		
-
-
-		socket.on('damage_taken', function(damage)
-		{
-			player.health -= damage;
-			if (player.health <= 0)
-				stage.removeChild(player.image);
-			socket.emit('message_to_server', player);
-		});
+		// socket.on('damage_taken', function(damage)
+		// {
+		// 	player.health -= damage;
+		// 	if (player.health <= 0)
+		// 		stage.removeChild(player.image);
+		// 	socket.emit('message_to_server', player);
+		// });
 
 // TODO: move to server-side
 		// checkPowerupCollision();
@@ -259,6 +265,26 @@ function updateBullets(serverBullets)
 		}
 	}
 }
+
+function updatePlayers(players)
+{
+	for (var i = 0; i < players.length; i++)
+	{
+		var newPlayer = players[i];
+		var oldPlayer = playerArray[i];
+
+		if (newPlayer.health <= 0) 
+			stage.removeChild(oldPlayer.image);
+		else if (i != playerID)
+		{
+			oldPlayer.health = newPlayer.health;
+			oldPlayer.image.rotation = newPlayer.image.rotation;
+			oldPlayer.image.x = newPlayer.image.x;
+			oldPlayer.image.y = newPlayer.image.y;
+		}
+	}
+}
+
 function updatePlayer(this_player, newData)
 {
 	if (newData.health > 0) 
@@ -341,6 +367,7 @@ function Player()
 	this.image = new createjs.Bitmap("images/players/player_1.png");
 	this.image.x = Math.random()*canvas.width;
 	this.image.y = Math.random()*canvas.height;
+	this.image.rotation = 0;
 	//set registration points to center of image
 	this.image.regX = 50;
 	this.image.regY = 50;

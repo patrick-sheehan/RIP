@@ -21,6 +21,7 @@ var TEMP_ROOM_SIZE = 2;
 
 // an array of sockets to each current client/player
 // this should eliminate need for player ID
+var socketArray = [];
 var playerArray = [];
 var healthArray = [];
 var bulletArray = [];
@@ -31,7 +32,7 @@ var bulletArray = [];
 // received a connection from a client
 io.sockets.on('connection', function(client) 
 { 
-	playerArray.push(client);
+	socketArray.push(client);
 	client.emit('player_number', {ID: playerCount});
 	playerCount++;
 	healthArray.push(100);
@@ -56,16 +57,13 @@ io.sockets.on('connection', function(client)
 	{ 
 		// send this player's data to all other players
 		// TODO: restrict to avoid excessive data transfers
+
+		playerArray[player.playerID] = player;
+		console.log("playerArray: " + JSON.stringify(playerArray ));
 		moveBullets();
-		var damage = checkBulletCollision(player);
-		if (damage > 0)
-		{
-			// player.health -= damage;
-			client.emit('damage_taken', damage);
-			// io.sockets.emit('data_to_client', player, bulletArray);
-		}
+		checkBulletCollision();
 		
-		io.sockets.emit('data_to_client', player, bulletArray);
+		io.sockets.emit('data_to_client', playerArray, bulletArray);
 	});
 
 	client.on('move_bullets', function()
@@ -93,8 +91,8 @@ io.sockets.on('connection', function(client)
 	client.on('disconnect', function ()
 	{	// called when client disconnects. delete the socket.
 		playerCount--;
-		var i = playerArray.indexOf(client);
-		delete playerArray[i];
+		var i = socketArray.indexOf(client);
+		delete socketArray[i];
 		console.log('server playercount decremented to:' + playerCount);
 		// TODO: client-side: handle when another player leaves
 	});
@@ -145,30 +143,53 @@ function moveBullets()
 	}
 }
 
-function checkBulletCollision(player)
+function checkBulletCollision()
 { // check if any bullets hit the enemy and update his health
-	// var playerIndex = playerArray.indexOf(playerID);
-	// var p = playerArray[playerIndex];
-
-	var totalDamage = 0;
-
-	for(var i = 0; i < bulletArray.length; i++)
+	var threshhold = 30;
+	for(var j = 0; j < playerArray.length; j++)
 	{
-		var bullet = bulletArray[i];
-		if(player.health > 0 && bullet.damagable && 
-				bullet.shooterID != player.playerID &&
-				bullet.image.x > player.image.x - BULLET_THRESHHOLD &&
-				bullet.image.x < player.image.x + BULLET_THRESHHOLD &&
-				bullet.image.y > player.image.y - BULLET_THRESHHOLD &&
-				bullet.image.y < player.image.y + BULLET_THRESHHOLD)
+		for(var i = 0; i < bulletArray.length; i++)
 		{
-			bullet.damagable = false;
-
-			// flag this one so it will be removed later in server's moveBullets() and client's updateBullets()
-			bullet.speed = -1;	
-
-			totalDamage += BULLET_DAMAGE;
+			if(playerArray[j].health > 0 &&
+				bulletArray[i].image.x > playerArray[j].image.x - threshhold &&
+				bulletArray[i].image.x < playerArray[j].image.x + threshhold &&
+				bulletArray[i].image.y > playerArray[j].image.y - threshhold &&
+				bulletArray[i].image.y < playerArray[j].image.y + threshhold &&
+				bulletArray[i].damagable)
+			{
+				console.log("bullet collision");
+				bulletArray[i].damagable = false;
+				bulletArray[i].speed = -1;
+				playerArray[j].health -= BULLET_DAMAGE;
+			}
 		}
 	}
-	return totalDamage;
 }
+
+// function checkBulletCollision(player)
+// { // check if any bullets hit the enemy and update his health
+// 	// var playerIndex = playerArray.indexOf(playerID);
+// 	// var p = playerArray[playerIndex];
+
+// 	var totalDamage = 0;
+
+// 	for(var i = 0; i < bulletArray.length; i++)
+// 	{
+// 		var bullet = bulletArray[i];
+// 		if(player.health > 0 && bullet.damagable && 
+// 				bullet.shooterID != player.playerID &&
+// 				bullet.image.x > player.image.x - BULLET_THRESHHOLD &&
+// 				bullet.image.x < player.image.x + BULLET_THRESHHOLD &&
+// 				bullet.image.y > player.image.y - BULLET_THRESHHOLD &&
+// 				bullet.image.y < player.image.y + BULLET_THRESHHOLD)
+// 		{
+// 			bullet.damagable = false;
+
+// 			// flag this one so it will be removed later in server's moveBullets() and client's updateBullets()
+// 			bullet.speed = -1;	
+
+// 			totalDamage += BULLET_DAMAGE;
+// 		}
+// 	}
+// 	return totalDamage;
+// }
