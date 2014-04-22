@@ -58,6 +58,13 @@ var playerArray; 	// will include self as well as other opponents
 var timestamp;
 var healthTextArray = [];
 
+
+var manifest = [
+	{id:"shoot", src:"audio/shoot.mp3", data:6}
+	{id:"death", src:"audio/hey_listen", data:6},	
+
+];
+
 document.onkeydown = handleKeyDown;
 document.onkeyup = handleKeyUp;
 document.getElementById( "gameCanvas" ).onmousedown = function(event){
@@ -644,6 +651,7 @@ function rotatePlayer()
 
 function playerShoot()
 { // player shot a bullet
+	createjs.Sound.play("shoot", createjs.Sound.INTERUPT_LATE);
 	if(bulletFrameCounter == 0)
 	{
 		// create a bullet and send it's data to server
