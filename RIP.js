@@ -143,7 +143,6 @@ function tick(event)
 		//
 		// determinePowerup();
 
-
 // TODO: move to server-side
 		// checkPowerupCollision();
 
@@ -165,13 +164,13 @@ function tick(event)
 				{
 					if (i == playerID)
 					{	// initialize own player
-						player = new Player();
-						player.playerID = playerID;
+						player = new Player(i);
+						// player.playerID = playerID;
 						playerArray[i] = player;
 					}
 					else
 					{
-						var p = new Player();
+						var p = new Player(i);
 						playerArray[i] = p;
 					}
 				}
@@ -313,10 +312,17 @@ function createTexts()
 	}
 }
 
-function Player()
+function Player(playerID)
 {	// initialize a player
 	// this.health = 100;
-	this.image = new createjs.Bitmap("images/players/player_1.png");
+
+	if (typeof playerID !== "undefined") { this.playerID = playerID; }
+	else this.playerID = -1;
+
+	// this.playerID = playerID
+	var imageBitmap = "images/players/player_" + (playerID+1) + ".png";
+	this.image = new createjs.Bitmap(imageBitmap);
+
 	this.image.x = Math.random()*canvas.width;
 	this.image.y = Math.random()*canvas.height;
 	this.image.rotation = 0;
