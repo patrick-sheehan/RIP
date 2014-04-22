@@ -33,12 +33,12 @@ var leftPressed;
 var rightPressed;
 var mousePressed = false;
 
-var movementSpeed = 5;
+var movementSpeed = 10;
 var currentBulletFireRate = 20;		//higher the rate, slower bullet shoots
 var BULLET_FIRERATE_NORMAL = 20;
 var BULLET_FIREREATE_POWERUP = 5;
 var bulletFrameCounter = 0;
-var bulletSpeed = 15;
+var bulletSpeed = 30;
 var BULLET_DAMAGE = 20;				//damage each bullet does, player's health starts at 100
 var RESPAWN_TIME = 5000;
 
@@ -50,7 +50,7 @@ var playerPowerupTime = 0;			//time counter (in ticks) that player can have powe
 var MAX_POWERUP_TIME = 500;			//set time that player gets it
 var removePlayerPowerup = false;	//so that on each tick it doesn't change image back
 var POWERUP_ODDS = 500;				// "1/this" chance of powerup per tick
-var TICKER_FPS = 60;			// originally 60
+var TICKER_FPS = 30;			// originally 60
 
 var numPlayersHere = 1;
 
@@ -266,7 +266,7 @@ function updatePlayers(players, healths)
 function startLobby()
 { // start lobby for initial players waiting for others
 	lobbyText = new createjs.Text("Waiting for players...", "bold 34px Comic Sans", "#ffffff");
-	lobbyText.x = (canvas.width / 2) - 260;
+	lobbyText.x = (canvas.width / 2) - 160;
 	lobbyText.y = canvas.height / 2;
 	stage.addChild(lobbyText);
 }
