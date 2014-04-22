@@ -881,15 +881,9 @@ function updateHealthTexts(healths)
 	{
 		var thisPlayer = playerArray[i];
 		var h = healths[i];
-<<<<<<< HEAD
 		var healthText = healthTextArray[i];
 		healthText.color = "#ffffff";
 		
-=======
-		var healthText = healthTextArray[i]
-		healthText.color = "#ffffff";
->>>>>>> FETCH_HEAD
-
 		if (h <= 0) stage.removeChild(healthText);
 		else if(h >= 100) 
 		{
