@@ -868,6 +868,7 @@ function updateHealthTexts(healths)
 		var thisPlayer = playerArray[i];
 		var h = healths[i];
 		var healthText = healthTextArray[i]
+		healthText.color = "#ffffff";
 
 		if(h >= 100) healthText.color = "#ffffff";
 		else if(h > 80) healthText.color = "#ffcccc";
