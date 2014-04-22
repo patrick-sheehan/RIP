@@ -58,13 +58,13 @@ var playerArray; 	// will include self as well as other opponents
 var timestamp;
 var healthTextArray = [];
 
-
+/*
 var manifest = [
 	{id:"shoot", src:"audio/shoot.mp3", data:6}
 	{id:"death", src:"audio/hey_listen", data:6},	
 
 ];
-
+*/
 document.onkeydown = handleKeyDown;
 document.onkeyup = handleKeyUp;
 document.getElementById( "gameCanvas" ).onmousedown = function(event){
@@ -98,7 +98,7 @@ function init()
 
 	startLobby();
 	
-	socket = io.connect("http://localhost:5000");	// connect to the server 
+	socket = io.connect("http://insanitignis.com:5000");	// connect to the server 
 
 	socket.on('player_number', function(data)
 	{
@@ -214,7 +214,7 @@ function updateBullets(serverBullets)
 		{	// if a bullet exists at this index
 			var cliBullet = bulletArray[i];
 			
-			// update bullet location
+			// update bullet ƒtion
 			cliBullet.speed = servBullet.speed;
 
 			if (cliBullet.speed == -1)
@@ -288,6 +288,7 @@ function createTexts()
 	playerText.x = 10;
 	playerText.y = 10;
 	stage.addChild(playerText);
+	playerText.color = "#ffffff";
 	healthTextArray.push(playerText);
 
 	enemy1Text = new createjs.Text("Health: 100%", "bold 34px Comic Sans", "#ffffff");
