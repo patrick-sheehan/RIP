@@ -18,6 +18,7 @@ var bulletSpeed = 5;
 var BULLET_DAMAGE = 20;				//damage each bullet does. player's health starts at 100
 var BULLET_THRESHHOLD = 30;
 var TEMP_ROOM_SIZE = 4;
+var RESPAWN_TIME = 5000;				// milliseconds for respawn
 
 // an array of sockets to each current client/player
 // this should eliminate need for player ID
@@ -131,23 +132,39 @@ function checkBulletCollision()
 	var threshhold = 30;
 	for(var j = 0; j < playerArray.length; j++)
 	{
-		for(var i = 0; i < bulletArray.length; i++)
+		var player = playerArray[j];
+		if (player === undefined) continue;
+		if (player.isAlive)
 		{
-			var player = playerArray[j]
-			var bullet = bulletArray[i];
-			if(healthArray[i] > 0 && bullet.damagable &&
-				bullet.shooterID != player.playerID &&
-				bullet.image.x > player.image.x - threshhold &&
-				bullet.image.x < player.image.x + threshhold &&
-				bullet.image.y > player.image.y - threshhold &&
-				bullet.image.y < player.image.y + threshhold)
+			for(var i = 0; i < bulletArray.length; i++)
 			{
-				console.log("bullet collision");
-				bullet.damagable = false;
-				bullet.speed = -1;
-				healthArray[j] -= BULLET_DAMAGE;
-				// player.health -= BULLET_DAMAGE;
+				var bullet = bulletArray[i];
+				if(healthArray[i] > 0 && bullet.damagable &&
+					bullet.shooterID != player.playerID &&
+					bullet.image.x > player.image.x - threshhold &&
+					bullet.image.x < player.image.x + threshhold &&
+					bullet.image.y > player.image.y - threshhold &&
+					bullet.image.y < player.image.y + threshhold)
+				{
+					console.log("bullet collision");
+					bullet.damagable = false;
+					bullet.speed = -1;
+					healthArray[j] -= BULLET_DAMAGE;
+				}
 			}
+
+			if (healthArray[j] <= 0)
+			{
+				// player.deathTime = new Date().getTime();
+				player.isAlive = false;
+				// healthArray[j] = 100;
+			}
+		}
+		else // player is dead, check for respawn
+		{
+			healthArray[j] += .5;
+			if (healthArray[j] > 100)
+				healthArray[j] = 100;
 		}
 	}
 }

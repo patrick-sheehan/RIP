@@ -40,6 +40,7 @@ var BULLET_FIREREATE_POWERUP = 5;
 var bulletFrameCounter = 0;
 var bulletSpeed = 15;
 var BULLET_DAMAGE = 20;				//damage each bullet does, player's health starts at 100
+var RESPAWN_TIME = 5000;
 
 //ALL_CAPS variables are final, do not modify their values in the code, only up here
 var bulletArray = [];
@@ -58,13 +59,12 @@ var playerArray; 	// will include self as well as other opponents
 var timestamp;
 var healthTextArray = [];
 
-
+/*
 var manifest = [
-	{id:"shoot", src:"audio/shoot.mp3", data:6}
-	{id:"death", src:"audio/hey_listen", data:6},	
-
+	{id:"shoot", src:"audio/shoot.mp3", data:6},
+	{id:"death", src:"audio/hey_listen", data:6}	
 ];
-
+*/
 document.onkeydown = handleKeyDown;
 document.onkeyup = handleKeyUp;
 document.getElementById( "gameCanvas" ).onmousedown = function(event){
@@ -98,7 +98,7 @@ function init()
 
 	startLobby();
 	
-	socket = io.connect("http://localhost:5000");	// connect to the server 
+	socket = io.connect("http://insanitignis.com:5000");	// connect to the server 
 
 	socket.on('player_number', function(data)
 	{
@@ -214,7 +214,7 @@ function updateBullets(serverBullets)
 		{	// if a bullet exists at this index
 			var cliBullet = bulletArray[i];
 			
-			// update bullet location
+			// update bullet ƒtion
 			cliBullet.speed = servBullet.speed;
 
 			if (cliBullet.speed == -1)
@@ -240,14 +240,26 @@ function updatePlayers(players, healths)
 		var newPlayer = players[i];
 		var oldPlayer = playerArray[i];
 
-		if (healths[i] <= 0) 
-			stage.removeChild(oldPlayer.image);
+		oldPlayer.isAlive = newPlayer.isAlive;
+
+		if (!oldPlayer.isAlive)
+		{
+			if (healths[i] >= 100)
+			{	// player has had health reset; respawn him
+				oldPlayer.isAlive = true;
+				stage.addChild(oldPlayer.image);
+			}
+			else
+			{	// player is dead, ensure that not on the map
+				stage.removeChild(oldPlayer.image);
+			}
+		}
 		else if (i != playerID)
 		{
 			oldPlayer.image.rotation = newPlayer.image.rotation;
 			oldPlayer.image.x = newPlayer.image.x;
 			oldPlayer.image.y = newPlayer.image.y;
-		}
+		}		
 	}
 }
 
@@ -288,6 +300,7 @@ function createTexts()
 	playerText.x = 10;
 	playerText.y = 10;
 	stage.addChild(playerText);
+	playerText.color = "#ffffff";
 	healthTextArray.push(playerText);
 
 	enemy1Text = new createjs.Text("Health: 100%", "bold 34px Comic Sans", "#ffffff");
@@ -316,6 +329,8 @@ function Player(playerID)
 {	// initialize a player
 	// this.health = 100;
 
+	this.deathTime = -1;
+	this.isAlive = true;
 	if (typeof playerID !== "undefined") { this.playerID = playerID; }
 	else this.playerID = -1;
 
@@ -866,15 +881,21 @@ function updateHealthTexts(healths)
 	{
 		var thisPlayer = playerArray[i];
 		var h = healths[i];
-		var healthText = healthTextArray[i]
+		var healthText = healthTextArray[i];
+		healthText.color = "#ffffff";
+		
 
-		if(h >= 100) healthText.color = "#ffffff";
+		if (h <= 0) stage.removeChild(healthText);
+		else if(h >= 100) 
+		{
+			healthText.color = "#ffffff";
+			stage.addChild(healthText);
+		}
 		else if(h > 80) healthText.color = "#ffcccc";
 		else if(h > 60) healthText.color = "#ff9999";
 		else if(h > 40) healthText.color = "#ff6666";
 		else if(h > 20) healthText.color = "#ff3333";
 		else if(h > 0) healthText.color = "#ff0000";
-		else stage.removeChild(healthText);
 
 		if (player.playerID == i)
 		{
