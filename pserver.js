@@ -26,6 +26,7 @@ var socketArray = [];
 var playerArray = [];
 var healthArray = [];
 var bulletArray = [];
+var player_lives;
 
 // TODO: array of rooms, where each room is an array of 4 client sockets
 
@@ -63,7 +64,7 @@ io.sockets.on('connection', function(client)
 		moveBullets();
 		checkBulletCollision();
 
-		io.sockets.emit('data_to_client', playerArray, bulletArray, healthArray);
+		io.sockets.emit('data_to_client', playerArray, bulletArray, healthArray, player_lives);
 	});
 
 	client.on('new_bullet', function(bullet)
@@ -157,6 +158,8 @@ function checkBulletCollision()
 			{
 				// player.deathTime = new Date().getTime();
 				player.isAlive = false;
+				player_lives = player.playerLives - 1;
+
 				// healthArray[j] = 100;
 			}
 		}
