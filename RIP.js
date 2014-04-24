@@ -245,16 +245,19 @@ function updatePlayers(players, healths, player_lives)
 
 		if (!oldPlayer.isAlive)
 		{
-			if (healths[i] >= 100)
-			{	// player has had health reset; respawn him
-				oldPlayer.isAlive = true;
-				oldPlayer.playerLives = player_lives;
-				stage.addChild(oldPlayer.image);
-			}
-			else
-			{	// player is dead, ensure that not on the map
-				stage.removeChild(oldPlayer.image);
-			}
+				if (healths[i] >= 100)
+				{	// player has had health reset; respawn him
+					oldPlayer.playerLives = player_lives;
+					if(oldPlayer.playerLives > 0)
+					{
+						oldPlayer.isAlive = true;
+						stage.addChild(oldPlayer.image);
+					}
+				}
+				else
+				{	// player is dead, ensure that not on the map
+					stage.removeChild(oldPlayer.image);
+				}
 		}
 		else if (i != playerID)
 		{
@@ -333,7 +336,7 @@ function Player(playerID)
 
 	this.deathTime = -1;
 	this.isAlive = true;
-	this.playerLives = 7;
+	this.playerLives = 2;
 	if (typeof playerID !== "undefined") { this.playerID = playerID; }
 	else this.playerID = -1;
 
