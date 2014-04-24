@@ -40,7 +40,7 @@ io.sockets.on('connection', function(client)
 	client.emit('player_number', {ID: playerCount});
 	playerCount++;
 	healthArray.push(100);
-	player_lives.push(2);
+	player_lives.push(5);
  	console.log("server's count incremented to: " + playerCount);
 
 	client.on('check_lobby_full', function(roomSize)
