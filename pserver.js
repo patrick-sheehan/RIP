@@ -26,7 +26,7 @@ var socketArray = [];
 var playerArray = [];
 var healthArray = [];
 var bulletArray = [];
-var player_lives;
+var player_lives = [];
 
 
 var serverRoomSize;
@@ -40,6 +40,7 @@ io.sockets.on('connection', function(client)
 	client.emit('player_number', {ID: playerCount});
 	playerCount++;
 	healthArray.push(100);
+	player_lives.push(2);
  	console.log("server's count incremented to: " + playerCount);
 
 	client.on('check_lobby_full', function(roomSize)
@@ -170,7 +171,7 @@ function checkBulletCollision()
 			{
 				// player.deathTime = new Date().getTime();
 				player.isAlive = false;
-				player_lives = player.playerLives - 1;
+				player_lives[j] = player_lives[j] - 1;
 
 				// healthArray[j] = 100;
 			}

@@ -226,14 +226,14 @@ function updatePlayers(players, healths, player_lives)
 	{
 		var newPlayer = players[i];
 		var oldPlayer = playerArray[i];
-
+		oldPlayer.playerLives = player_lives[i];
 		oldPlayer.isAlive = newPlayer.isAlive;
 
 		if (!oldPlayer.isAlive)
 		{
 				if (healths[i] >= 100)
 				{	// player has had health reset; respawn him
-					oldPlayer.playerLives = player_lives;
+					//oldPlayer.playerLives = player_lives[i];
 					if(oldPlayer.playerLives > 0)
 					{
 						oldPlayer.isAlive = true;
