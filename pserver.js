@@ -36,6 +36,10 @@ var serverRoomSize;
 // received a connection from a client
 io.sockets.on('connection', function(client) 
 { 
+	if ( playerCount > serverRoomSize)
+ 	{
+	  	client.disconnect();
+	}
 	socketArray.push(client);
 	client.emit('player_number', {ID: playerCount});
 	playerCount++;
