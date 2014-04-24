@@ -17,7 +17,7 @@ var bulletSpeed = 5;
 
 var BULLET_DAMAGE = 20;				//damage each bullet does. player's health starts at 100
 var BULLET_THRESHHOLD = 30;
-// var TEMP_ROOM_SIZE = 2;
+
 var RESPAWN_TIME = 5000;				// milliseconds for respawn
 
 // an array of sockets to each current client/player
@@ -26,6 +26,7 @@ var socketArray = [];
 var playerArray = [];
 var healthArray = [];
 var bulletArray = [];
+var player_lives;
 
 
 var serverRoomSize;
@@ -75,7 +76,7 @@ io.sockets.on('connection', function(client)
 		moveBullets();
 		checkBulletCollision();
 
-		io.sockets.emit('data_to_client', playerArray, bulletArray, healthArray);
+		io.sockets.emit('data_to_client', playerArray, bulletArray, healthArray, player_lives);
 	});
 
 	client.on('new_bullet', function(bullet)
@@ -169,6 +170,8 @@ function checkBulletCollision()
 			{
 				// player.deathTime = new Date().getTime();
 				player.isAlive = false;
+				player_lives = player.playerLives - 1;
+
 				// healthArray[j] = 100;
 			}
 		}

@@ -55,6 +55,7 @@ var TICKER_FPS = 30;			// originally 60
 var numPlayersHere = 1;
 
 var playerID;			// start from 0
+var playerLives;	//start with 7
 var playerArray; 	// will include self as well as other opponents
 var timestamp;
 var healthTextArray = [];
@@ -123,9 +124,9 @@ function tick(event)
 		// send this client's data to the server
 		socket.emit('message_to_server', player);
 
-		socket.on('data_to_client', function(players, bullets, healths)
+		socket.on('data_to_client', function(players, bullets, healths, player_lives)
 		{	// server-side sends updated array of players, bullets, and player's healths
-			updatePlayers(players, healths);
+			updatePlayers(players, healths, player_lives);
 			updateBullets(bullets);
 			updateHealthTexts(healths);
 		});
@@ -219,7 +220,7 @@ function updateBullets(serverBullets)
 	}
 }
 
-function updatePlayers(players, healths)
+function updatePlayers(players, healths, player_lives)
 {
 	for (var i = 0; i < players.length; i++)
 	{
@@ -230,15 +231,19 @@ function updatePlayers(players, healths)
 
 		if (!oldPlayer.isAlive)
 		{
-			if (healths[i] >= 100)
-			{	// player has had health reset; respawn him
-				oldPlayer.isAlive = true;
-				stage.addChild(oldPlayer.image);
-			}
-			else
-			{	// player is dead, ensure that not on the map
-				stage.removeChild(oldPlayer.image);
-			}
+				if (healths[i] >= 100)
+				{	// player has had health reset; respawn him
+					oldPlayer.playerLives = player_lives;
+					if(oldPlayer.playerLives > 0)
+					{
+						oldPlayer.isAlive = true;
+						stage.addChild(oldPlayer.image);
+					}
+				}
+				else
+				{	// player is dead, ensure that not on the map
+					stage.removeChild(oldPlayer.image);
+				}
 		}
 		else if (i != playerID)
 		{
@@ -277,13 +282,13 @@ function createTexts()
 	{
 		enemy2Text = new createjs.Text("Health: 100%", "bold 34px Comic Sans", "#ffffff");
 		enemy2Text.x = 10;
-		enemy2Text.y = canvas.height - 50;
+		enemy2Text.y = canvas.height - 100;
 		stage.addChild(enemy2Text);
 		healthTextArray.push(enemy2Text);
 
 		enemy3Text = new createjs.Text("Health: 100%", "bold 34px Comic Sans", "#ffffff");
 		enemy3Text.x = canvas.width - 350;
-		enemy3Text.y = canvas.height - 50;
+		enemy3Text.y = canvas.height - 100;
 		stage.addChild(enemy3Text);
 		healthTextArray.push(enemy3Text);
 	}
@@ -296,6 +301,7 @@ function Player(playerID)
 	this.roomSize = roomSize;
 	this.deathTime = -1;
 	this.isAlive = true;
+	this.playerLives = 2;
 	if (typeof playerID !== "undefined") { this.playerID = playerID; }
 	else this.playerID = -1;
 
@@ -863,11 +869,11 @@ function updateHealthTexts(healths)
 
 		if (player.playerID == i)
 		{
-			healthText.text = "Your Health: " + h + "%";
+			healthText.text = "Your Health: " + h + "%  " + "\nLives: " + thisPlayer.playerLives;
 		}
 		else
 		{
-			healthText.text = "Enemy " + (i + 1) + " Health: " + h + "%";
+			healthText.text = "Enemy " + (i + 1) + " Health: " + h + "%  " + "\nLives: " + thisPlayer.playerLives;
 		}
 	}
 
