@@ -318,13 +318,13 @@ function createTexts()
 	{
 		enemy2Text = new createjs.Text("Health: 100%", "bold 34px Comic Sans", "#ffffff");
 		enemy2Text.x = 10;
-		enemy2Text.y = canvas.height - 50;
+		enemy2Text.y = canvas.height - 100;
 		stage.addChild(enemy2Text);
 		healthTextArray.push(enemy2Text);
 
 		enemy3Text = new createjs.Text("Health: 100%", "bold 34px Comic Sans", "#ffffff");
 		enemy3Text.x = canvas.width - 350;
-		enemy3Text.y = canvas.height - 50;
+		enemy3Text.y = canvas.height - 100;
 		stage.addChild(enemy3Text);
 		healthTextArray.push(enemy3Text);
 	}

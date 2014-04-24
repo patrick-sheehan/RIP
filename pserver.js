@@ -17,7 +17,7 @@ var bulletSpeed = 5;
 
 var BULLET_DAMAGE = 20;				//damage each bullet does. player's health starts at 100
 var BULLET_THRESHHOLD = 30;
-var TEMP_ROOM_SIZE = 2;
+var TEMP_ROOM_SIZE = 4;
 var RESPAWN_TIME = 5000;				// milliseconds for respawn
 
 // an array of sockets to each current client/player
