@@ -1,4 +1,4 @@
-var io = require('socket.io').listen(8080);
+var io = require('socket.io').listen(5000);
 //8080
 //var app = require('http').createServer(handler), io = require('socket.io').listen(8080);
 

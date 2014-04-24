@@ -2,7 +2,8 @@
 // host: 10.201.145.60
 // port: 8080
 
-var socket = io.connect('http://insanitignis.com:8080');
+//var socket = io.connect('http://insanitignis.com:8080');
+var socket = io.connect('http://aggiedev.kd.io:8080');
 //var socket = io.connect('http://localhost:8080');
 var myClientId = null;
 var num_clients = 9001;

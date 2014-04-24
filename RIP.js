@@ -1,21 +1,30 @@
 var stage;
 var player;
+var enemy1;
+var enemy2;
+var enemy3;
 var background;
 var canvas;
 var socket;
+var gameActive = false;
+
+var mode = "";	//either 2player or 4player
 
 var playerText;
 var enemy1Text;
 var enemy2Text;
 var enemy3Text;
+var lobbyText;
 
-var ai;
-var AIMoveCounter = 0;				//counter to count ticks before changing move direction
-var AI_TICKS_TO_CHANGE = 40;			//number of ticks before AI changes move direction, lower numhber = more sporatic movement changes
+// var ai;
+// var AIMoveCounter = 0;				//counter to count ticks before changing move direction
+// var AI_TICKS_TO_CHANGE = 40;			//number of ticks before AI changes move direction, lower numhber = more sporatic movement changes
+
+var enemyList = [];
 
 var upKey = 87;
 var downKey = 83;
-var leftKey = 65; 
+var leftKey = 65;
 var rightKey = 68;
 
 var upPressed;
@@ -40,7 +49,12 @@ var playerPowerupTime = 0;			//time counter (in ticks) that player can have powe
 var MAX_POWERUP_TIME = 500;			//set time that player gets it
 var removePlayerPowerup = false;	//so that on each tick it doesn't change image back
 var POWERUP_ODDS = 500;				// "1/this" chance of powerup per tick
+var TICKER_FPS = 1;			// originally 60
 
+var numPlayersHere = 1;
+
+var playerID;			// start from 0
+var playerArray 	// will include self as well as other opponents
 
 document.onkeydown = handleKeyDown;
 document.onkeyup = handleKeyUp;
@@ -49,84 +63,260 @@ document.getElementById( "gameCanvas" ).onmousedown = function(event){
 };
 
 function init()
-{
+{	// initialize client-side variables
 	canvas = document.getElementById("gameCanvas");
 	stage = new createjs.Stage(canvas);
 	background = new createjs.Bitmap("images/backgrounds/grass-tiled.png");
 	stage.addChild(background);
-	createjs.Ticker.setFPS(60);
+	createjs.Ticker.setFPS(TICKER_FPS);
 	createjs.Ticker.addEventListener("tick", tick);
 	stage.addEventListener("stagemousedown", mouseClick);
 	stage.addEventListener("stagemouseup", mouseUnclick);
-	player = new Player();
-	ai = new AI();
-	createTexts();
-	stage.update();
 	
 
-	socket = io.connect();	// connect the socket to the localhost at port 8080
+	//TEMPORARILY COMMENTED OUT, FOR DEBUGGING
+	// var gameMode = confirm("OK = 2 player mode\n\nCancel = 4 player mode");
+	// if(gameMode)
+	// {
+	// 	mode = "2player";
+	// 	roomSize = 2;
+	// }
+	// else
+	// {
+	// 	mode = "4player";
+	// 	roomSize = 4;
+	// }
 
-	// socket.emit('message', {txt: "init()"});		// emit a 'message' where the data is txt:"init()"
+//Hard code for debugging
+	// player = new Player();
+	console.log("numEnemies = " + enemyList.length);
+//End hard code
 
-	// socket.on('text_msg', function(data){					// read for a 'text_msg' from server
-	// 	alert(data.msg);
-	// });
-
-}
-
-function tick(event)
-{
-	movePlayer();
-	rotatePlayer();
-	if(mousePressed)
-		playerShoot();
-	moveBullets();
-	determinePowerup();
-	moveAI();
-	checkAIBulletCollision();
-	checkPowerupCollision();
-	updateHealthTexts();
-	stage.update();
-
-
-  var currTime = new Date().getTime();
+	startLobby();
 	
-  // emit all information about player (from Player()) also include a timestamp w/ millisecond precision
-	socket.emit('message_to_server', {timestamp: currTime, ID: player.ID, health: player.health,
-																		imagex: player.image.x, imagey: player.image.y}); 
-																		// iamge.regX: player.image.regX, iamge.regY: player.image.regY });
-
-
-	socket.on('message_to_client', function(data){
-		console.log("server sent: " + data);
+	socket = io.connect("http://localhost:5000");	// connect to the server 
+	socket.on('player_number', function(data)
+	{
+		playerID = data.ID;
 	});
 }
 
-function createTexts()
+function tick(event)
+{ // this function called many times per minute, more frequent when tab is active in browser
+
+	socket.emit('message_to_server', {});
+
+	socket.on('full_room_achieved', function(room)
+	{
+		// console.log("receiving full_room_achieved");
+		if (typeof playerArray == 'undefined')
+		{
+			playerArray = new Array();
+			stage.removeChild(lobbyText);
+			for (var i = 0; i < room.numPlayers; i++)
+			{
+				if (i == playerID)
+				{	// initialize own player
+					player = new Player();
+					playerArray[i] = player;
+				}
+				else
+				{
+					var p = new Player();
+					playerArray[i] = p;
+				}
+				stage.update();
+			}
+			gameActive = true;
+		}
+	});
+
+	// if(!gameActive)
+	// { // conditional is true when players are in the lobby
+
+		// could request exact number from server, but probably costly
+		// lobbyText.text = "Waiting for " + roomSize + " total players"; 
+		
+		
+
+		// a new player joined the room
+		// socket.on('player_joined', function(data)
+		// {
+		// 	// create the new enemy	
+		// 	// TODO: pass parameters to enemy upon creation
+		// 	// var newEnemy = Enemy(data.player_color);
+		// 	numPlayersHere = data.player_count;
+		// 	var diff = roomSize - numPlayersHere;
+		// 	lobbyText.text = "Waiting for " + diff + " more players. " 
+		// 													+ numPlayersHere + " are connected...";
+
+		// 	// enemyList.push(newEnemy);
+
+		// 	if (numPlayersHere == roomSize)
+		// 	{	// if there is enough members to start the game
+		// 		console.log("enough to start!");
+		// 		gameActive = true;
+		// 		stage.removeChild(lobbyText);
+		// 		createTexts(roomSize);
+		// 	}
+		// 	stage.update();
+		// });
+
+
+		// if(mode === "2player")// && playerNumber === 2)
+		// {
+		// 	gameActive = true;
+		// 	stage.removeChild(lobbyText);
+		// 	initialize2player();
+		// }
+			
+		// else if(mode === "4player")// && playerNumber === 4)
+		// {
+		// 	gameActive = true;
+		// 	stage.removeChild(lobbyText);
+		// 	initialize4player();
+		// }
+		
+		// stage.update();
+	// }
+	// else
+	if (gameActive)
+	{ // this block is executed for every tick() function call once the game has started
+
+		// send this client's data to the server
+		socket.emit('message_to_server', {timestamp: currTime, health: player.health, index: playerID,
+														rotation: player.image.rotation, x: player.image.x, y: player.image.y }); 
+
+
+		socket.on('message_to_client', function(player_data)
+		{
+			// the playerArray now has old data for this player, 
+			// update it with the newer 'player_data' that was passed
+			// updatePlayer(playerArray[player_data.index], player_data);
+			// if (playerArray[player_data.index] != player)
+			// {
+			// 	playerArray[player_data.index].health = player_data.health;
+			// 	playerArray[player_data.index].image.rotation = player_data.rotation;
+			// 	playerArray[player_data.index].image.x = player_data.x;
+			// 	playerArray[player_data.index].image.y = player_data.y;
+			// 	stage.update();
+			// }
+
+			if (player_data.index != undefined && player_data.index != playerID)
+			{
+				playerArray[player_data.index].health = player_data.health;
+				playerArray[player_data.index].image.rotation = player_data.rotation;
+				playerArray[player_data.index].image.x = player_data.x;
+				playerArray[player_data.index].image.y = player_data.y;
+				stage.update();
+			}
+
+		});
+
+		// console.log("game is active");
+		movePlayer();
+		// rotatePlayer();
+		// if(mousePressed)
+		// 	playerShoot();
+		// moveBullets();
+		// determinePowerup();
+		// moveEnemies();
+		// checkEnemyBulletCollision();
+		//checkPowerupCollision();
+		// updateHealthTexts();
+		stage.update();
+
+
+		var currTime = new Date().getTime();
+		// emit all information about this client's player to server
+		// also send a precise timestamp to validate synchronization
+
+
+
+		// socket.on('players', function(playerArray)
+		// {
+		// 	console.log(playerArray);
+		// });
+		// TODO: emit bullet data to server
+
+		// socket.on('message_to_client', function(player)
+		// {	
+
+		// });
+		// socket.on('disconnect', function()  
+		// {
+  //   });
+	}
+	stage.update();
+}
+
+function updatePlayer(this_player, newData)
 {
+	console.log("this_player = " + this_player);
+	this_player.health = newData.health;
+	this_player.image.rotation = newData.rotation;
+	this_player.image.x = newData.x;
+	this_player.image.y = newData.y;
+	stage.update();
+}
+
+function startLobby()
+{ // start lobby for initial players waiting for others
+	lobbyText = new createjs.Text("Waiting for players...", "bold 34px Comic Sans", "#ffffff");
+	lobbyText.x = (canvas.width / 2) - 260;
+	lobbyText.y = canvas.height / 2;
+	stage.addChild(lobbyText);
+}
+
+function initialize2player()
+{	// initialize two players (the enemy is a temporary placeholder)
+	player = new Player();
+	first = new Enemy();
+	enemyList.push(first);
+	createTexts(2);
+	stage.update();
+}
+
+function initialize4player()
+{	// initialize four players (enemies is a temporary placeholder)
+	player = new Player();
+	first = new Enemy();
+	second = new Enemy();
+	third = new Enemy();
+	enemyList.push(first);
+	enemyList.push(second);
+	enemyList.push(third);
+	createTexts(4);
+	stage.update();
+}
+
+function createTexts(numPlayers)
+{ // show texts to indicate health for each enemy
 	playerText = new createjs.Text("Your Health: 100%", "bold 34px Comic Sans", "#ffffff");
 	enemy1Text = new createjs.Text("Enemy 1 Health: 100%", "bold 34px Comic Sans", "#ffffff");
-	enemy2Text = new createjs.Text("Enemy 2 Health: 100%", "bold 34px Comic Sans", "#ffffff");
-	enemy3Text = new createjs.Text("Enemy 3 Health: 100%", "bold 34px Comic Sans", "#ffffff");
-
 	playerText.x = 10;
 	playerText.y = 10;
 	enemy1Text.x = canvas.width - 350;
 	enemy1Text.y = 10;
-	enemy2Text.x = 10;
-	enemy2Text.y = canvas.height - 50;
-	enemy3Text.x = canvas.width - 350;
-	enemy3Text.y = canvas.height - 50;
 
 	stage.addChild(playerText);
 	stage.addChild(enemy1Text);
-	stage.addChild(enemy2Text);
-	stage.addChild(enemy3Text);
+	
+	if(numPlayers == 4)
+	{
+		enemy2Text = new createjs.Text("Enemy 2 Health: 100%", "bold 34px Comic Sans", "#ffffff");
+		enemy3Text = new createjs.Text("Enemy 3 Health: 100%", "bold 34px Comic Sans", "#ffffff");
+		enemy2Text.x = 10;
+		enemy2Text.y = canvas.height - 50;
+		enemy3Text.x = canvas.width - 350;
+		enemy3Text.y = canvas.height - 50;
+		stage.addChild(enemy2Text);
+		stage.addChild(enemy3Text);
+	}
 }
 
 function Player()
-{
-	this.ID = -1; // will be assigned server-side
+{	// initialize a player
 	this.health = 100;
 	this.image = new createjs.Bitmap("images/players/player_1.png");
 	this.image.x = Math.random()*canvas.width;
@@ -137,9 +327,10 @@ function Player()
 	stage.addChild(this.image);
 }
 
-function AI()
-{
+function Enemy()
+{ // initialize a placeholder enemy
 	this.health = 100;
+	// TODO: identify picture with a variable (ie red/blue/green)
 	this.image = new createjs.Bitmap("images/players/player_1.png");
 	this.image.x = Math.random()*canvas.width;
 	this.image.y = Math.random()*canvas.height;
@@ -150,8 +341,48 @@ function AI()
 	stage.addChild(this.image);
 }
 
-function Bullet()
+// TODO: Boil these many enemy functions down to only what is needed 
+
+function Enemy(health, x, y, rotation)
+{ // initialize a parameter-specified enemy client-side
+	this.health = health;
+	// TODO: identify picture with a variable (ie red/blue/green)
+	this.image = new createjs.Bitmap("images/players/player_1.png");
+	this.image.x = x;
+	this.image.y = y;
+	//set registration points to center of image
+	this.image.regX = 50;
+	this.image.regY = 50;
+	this.moveDirection = 0;
+	this.image.rotation = rotation;
+	stage.addChild(this.image);
+}
+
+function Enemy(color)
 {
+	this.health = 100;
+	// TODO: identify picture with a variable (ie red/blue/green)
+	if (color === "red")
+	{
+		this.image = new createjs.Bitmap("images/players/player_2.png");
+	}	
+	else
+	{
+		this.image = new createjs.Bitmap("images/players/player_1.png");
+	}
+	this.image.x = Math.random()*canvas.width;
+	this.image.y = Math.random()*canvas.height;
+	//set registration points to center of image
+	this.image.regX = 50;
+	this.image.regY = 50;
+	this.moveDirection = 0;
+	stage.addChild(this.image);
+
+}
+
+
+function Bullet()
+{ // initialize a bullet, these will be stored in an array and passed to the server
 	this.damagable = true;
 
 	this.image = new createjs.Bitmap("images/objects/bullet.png");
@@ -192,9 +423,9 @@ function PowerupIndicator()
 	
 	stage.addChild(this.image);
 }
+
 function movePlayer()
-{
-	//doing each combination, as if you detect them separately then the player moves sqrt(2) as fast on diagonals
+{	//doing each combination, as if you detect them separately then the player moves sqrt(2) as fast on diagonals
 	if(upPressed && leftPressed)
 	{
 		player.image.y -= movementSpeed / 1.4;
@@ -315,80 +546,80 @@ function movePlayer()
 }
 
 //using AIMoveCounter and AI_TICKS_TO_CHANGE
-function moveAI()
+function moveEnemies()
 {
-	//new move direction
-	if(AIMoveCounter == 0)
-	{
-		//0-7
-		ai.moveDirection = Math.floor(Math.random()*8);
-		AIMoveCounter++;
-	}
-	else if(AIMoveCounter >= AI_TICKS_TO_CHANGE)
-	{
-		AIMoveCounter = 0;
-	}
-	else
-	{
-		AIMoveCounter++;
-	}
+	// //new move direction
+	// if(AIMoveCounter == 0)
+	// {
+		// //0-7
+		// ai.moveDirection = Math.floor(Math.random()*8);
+		// AIMoveCounter++;
+	// }
+	// else if(AIMoveCounter >= AI_TICKS_TO_CHANGE)
+	// {
+		// AIMoveCounter = 0;
+	// }
+	// else
+	// {
+		// AIMoveCounter++;
+	// }
 
-	switch(ai.moveDirection)
-	{
-		case 0:
-			ai.image.x += movementSpeed;
-			break;
-		case 1:
-			ai.image.x -= movementSpeed;
-			break;
-		case 2:
-			ai.image.y += movementSpeed;
-			break;
-		case 3:
-			ai.image.y -= movementSpeed;
-			break;
-		case 4:
-			ai.image.x += movementSpeed / 1.4;
-			ai.image.y += movementSpeed / 1.4;
-			break;
-		case 5:
-			ai.image.x -= movementSpeed / 1.4;
-			ai.image.y -= movementSpeed / 1.4;
-			break;
-		case 6:
-			ai.image.x += movementSpeed / 1.4;
-			ai.image.y -= movementSpeed / 1.4;
-			break;
-		default:
-			ai.image.x -= movementSpeed / 1.4;
-			ai.image.y += movementSpeed / 1.4;
-	}
+	// switch(ai.moveDirection)
+	// {
+		// case 0:
+			// ai.image.x += movementSpeed;
+			// break;
+		// case 1:
+			// ai.image.x -= movementSpeed;
+			// break;
+		// case 2:
+			// ai.image.y += movementSpeed;
+			// break;
+		// case 3:
+			// ai.image.y -= movementSpeed;
+			// break;
+		// case 4:
+			// ai.image.x += movementSpeed / 1.4;
+			// ai.image.y += movementSpeed / 1.4;
+			// break;
+		// case 5:
+			// ai.image.x -= movementSpeed / 1.4;
+			// ai.image.y -= movementSpeed / 1.4;
+			// break;
+		// case 6:
+			// ai.image.x += movementSpeed / 1.4;
+			// ai.image.y -= movementSpeed / 1.4;
+			// break;
+		// default:
+			// ai.image.x -= movementSpeed / 1.4;
+			// ai.image.y += movementSpeed / 1.4;
+	// }
 
-	var threshhold = 50;
-	if(ai.image.x - threshhold < 0)
-	{
-		ai.image.x = threshhold;
-		AIMoveCounter = 0;
-	}
-	if(ai.image.y - threshhold < 0)
-	{
-		ai.image.y = threshhold;
-		AIMoveCounter = 0;
-	}
-	if(ai.image.x + threshhold  > canvas.width)
-	{
-		ai.image.x = canvas.width - threshhold;
-		AIMoveCounter = 0;
-	}
-	if(ai.image.y + threshhold > canvas.height)
-	{
-		ai.image.y = canvas.height - threshhold;
-		AIMoveCounter = 0;
-	}
+	// var threshhold = 50;
+	// if(ai.image.x - threshhold < 0)
+	// {
+		// ai.image.x = threshhold;
+		// AIMoveCounter = 0;
+	// }
+	// if(ai.image.y - threshhold < 0)
+	// {
+		// ai.image.y = threshhold;
+		// AIMoveCounter = 0;
+	// }
+	// if(ai.image.x + threshhold  > canvas.width)
+	// {
+		// ai.image.x = canvas.width - threshhold;
+		// AIMoveCounter = 0;
+	// }
+	// if(ai.image.y + threshhold > canvas.height)
+	// {
+		// ai.image.y = canvas.height - threshhold;
+		// AIMoveCounter = 0;
+	// }
 }
 
 function moveBullets()
-{
+{ // move the bullets
 	for(var i = 0; i < bulletArray.length; i++)
 	{
 		bulletArray[i].image.x += Math.sin(bulletArray[i].angle*(Math.PI/-180)) * bulletSpeed;
@@ -409,7 +640,7 @@ function moveBullets()
 }
 
 function rotatePlayer()
-{
+{ // rotate the player
 	var mouseX = stage.mouseX;
 	var mouseY = stage.mouseY;
 	var rotationAngle = Math.atan2(mouseY - player.image.y, mouseX - player.image.x);
@@ -417,7 +648,7 @@ function rotatePlayer()
 }
 
 function playerShoot()
-{
+{ // player shoots bullets
 	if(bulletFrameCounter == 0)
 	{
 		var bullet = new Bullet();
@@ -465,44 +696,48 @@ function determinePowerup()
 	}
 }
 
-function checkAIBulletCollision()
-{
+function checkEnemyBulletCollision()
+{ // check if any bullets hit the enemy and update his health
 	var threshhold = 30;
-	for(var i = 0; i < bulletArray.length; i++)
+	for(var j = 0; j < enemyList.length; j++)
 	{
-		if(bulletArray[i].image.x > ai.image.x - threshhold &&
-			bulletArray[i].image.x < ai.image.x + threshhold &&
-			bulletArray[i].image.y > ai.image.y - threshhold &&
-			bulletArray[i].image.y < ai.image.y + threshhold &&
-			bulletArray[i].damagable)
+		for(var i = 0; i < bulletArray.length; i++)
 		{
-			console.log("bullet collision");
-			bulletArray[i].damagable = false;
-			stage.removeChild(bulletArray[i].image);
-			bulletArray.slice(i);
-			ai.health -= BULLET_DAMAGE;
-			if(ai.health <= 0)
+			if(enemyList[j].health > 0 &&
+				bulletArray[i].image.x > enemyList[j].image.x - threshhold &&
+				bulletArray[i].image.x < enemyList[j].image.x + threshhold &&
+				bulletArray[i].image.y > enemyList[j].image.y - threshhold &&
+				bulletArray[i].image.y < enemyList[j].image.y + threshhold &&
+				bulletArray[i].damagable)
 			{
-				stage.removeChild(ai.image);
-				delete ai;
-				ai = new AI();
+				console.log("bullet collision");
+				bulletArray[i].damagable = false;
+				stage.removeChild(bulletArray[i].image);
+				bulletArray.slice(i);
+				enemyList[j].health -= BULLET_DAMAGE;
+				if(enemyList[j].health <= 0)
+				{
+					stage.removeChild(enemyList[j].image);
+					//var newEnemy = new Enemy();
+					//enemyList.push(newEnemy);
+				}
 			}
+
+
+			// bulletArray[i].image.x += Math.sin(bulletArray[i].angle*(Math.PI/-180)) * bulletSpeed;
+			// bulletArray[i].image.y += Math.cos(bulletArray[i].angle*(Math.PI/-180)) * bulletSpeed;
+			// bulletArray[i].initialX = bulletArray[i].image.x;
+			// bulletArray[i].initialY = bulletArray[i].image.y;
+
+			// //TODO: this is to prevent memory leak with bullets travelling off the canvas indefinitely, currently causes bug where
+			// //bullet completely stops
+			// if(bulletArray[i].image.x < 0 || bulletArray[i].image.x > canvas.width || bulletArray[i].image.y < 0 || bulletArray[i].image.y > canvas.height)
+			// {
+			// 	var thisBullet = bulletArray[i];
+			// 	//delete thisBullet;
+			// 	//bulletArray = bulletArray.slice(i);
+			// }
 		}
-
-
-		// bulletArray[i].image.x += Math.sin(bulletArray[i].angle*(Math.PI/-180)) * bulletSpeed;
-		// bulletArray[i].image.y += Math.cos(bulletArray[i].angle*(Math.PI/-180)) * bulletSpeed;
-		// bulletArray[i].initialX = bulletArray[i].image.x;
-		// bulletArray[i].initialY = bulletArray[i].image.y;
-
-		// //TODO: this is to prevent memory leak with bullets travelling off the canvas indefinitely, currently causes bug where
-		// //bullet completely stops
-		// if(bulletArray[i].image.x < 0 || bulletArray[i].image.x > canvas.width || bulletArray[i].image.y < 0 || bulletArray[i].image.y > canvas.height)
-		// {
-		// 	var thisBullet = bulletArray[i];
-		// 	//delete thisBullet;
-		// 	//bulletArray = bulletArray.slice(i);
-		// }
 	}
 }
 
@@ -541,11 +776,9 @@ function checkPowerupCollision()
 }
 
 function updateHealthTexts()
-{
+{ // update the texts that indicate players' healths
 	playerText.text = "Your Health: " + player.health + "%";
-	enemy1Text.text = "Enemy 1 Health: " + ai.health + "%";
-	//playerText.text = "Your Health: " + player.health + "%";
-	//playerText.text = "Your Health: " + player.health + "%";
+	enemy1Text.text = "Enemy 1 Health: " + enemyList[0].health + "%";
 
 	if(player.health >= 100)
 		playerText.color = "#ffffff";
@@ -560,18 +793,50 @@ function updateHealthTexts()
 	else
 		playerText.color = "#ff0000";
 
-	if(ai.health >= 100)
+	if(enemyList[0].health >= 100)
 		enemy1Text.color = "#ffffff";
-	else if(ai.health > 80)
+	else if(enemyList[0].health > 80)
 		enemy1Text.color = "#ffcccc";
-	else if(ai.health > 60)
+	else if(enemyList[0].health > 60)
 		enemy1Text.color = "#ff9999";
-	else if(ai.health > 40)
+	else if(enemyList[0].health > 40)
 		enemy1Text.color = "#ff6666";
-	else if(ai.health > 20)
+	else if(enemyList[0].health > 20)
 		enemy1Text.color = "#ff3333";
 	else
 		enemy1Text.color = "#ff0000";
+		
+	if(mode == "4player")
+	{
+		enemy2Text.text = "Enemy 2 Health: " + enemyList[1].health + "%";
+		enemy3Text.text = "Enemy 3 Health: " + enemyList[2].health + "%";
+		
+		if(enemyList[1].health >= 100)
+			enemy2Text.color = "#ffffff";
+		else if(enemyList[1].health > 80)
+			enemy2Text.color = "#ffcccc";
+		else if(enemyList[1].health > 60)
+			enemy2Text.color = "#ff9999";
+		else if(enemyList[1].health > 40)
+			enemy2Text.color = "#ff6666";
+		else if(enemyList[1].health > 20)
+			enemy2Text.color = "#ff3333";
+		else
+			enemy2Text.color = "#ff0000";
+			
+		if(enemyList[2].health >= 100)
+			enemy3Text.color = "#ffffff";
+		else if(enemyList[2].health > 80)
+			enemy3Text.color = "#ffcccc";
+		else if(enemyList[2].health > 60)
+			enemy3Text.color = "#ff9999";
+		else if(enemyList[2].health > 40)
+			enemy3Text.color = "#ff6666";
+		else if(enemyList[2].health > 20)
+			enemy3Text.color = "#ff3333";
+		else
+			enemy3Text.color = "#ff0000";
+	}
 }
 
 function mouseClick(canvas, e)
