@@ -82,23 +82,23 @@ function init()
 	stage.addEventListener("stagemousedown", mouseClick);
 	stage.addEventListener("stagemouseup", mouseUnclick);
 	
-
-	//TEMPORARILY COMMENTED OUT, FOR DEBUGGING
-	// var gameMode = confirm("OK = 2 player mode\n\nCancel = 4 player mode");
-	// if(gameMode)
-	// {
-	// 	mode = "2player";
-	// 	roomSize = 2;
-	// }
-	// else
-	// {
-	// 	mode = "4player";
-	// 	roomSize = 4;
-	// }
+	var gameMode = confirm("OK = 2 player mode\n\nCancel = 4 player mode");
+	if(gameMode)
+	{
+		mode = "2player";
+		roomSize = 2;
+	}
+	else
+	{
+		mode = "4player";
+		roomSize = 4;
+	}
 
 	startLobby();
 	
-	socket = io.connect("http://insanitignis.com:5000");	// connect to the server 
+	// connect to the server 
+	socket = io.connect("http://insanitignis.com:5000");	
+	// socket = io.connect("http://localhost:5000");	
 
 	socket.on('player_number', function(data)
 	{
@@ -108,7 +108,7 @@ function init()
 
 function tick(event)
 { // this function called many times per minute, more frequent when tab is active in browser
-	
+	console.log("tick!");
 	if (gameActive)
 	{ // the game has started
 
@@ -152,24 +152,24 @@ function tick(event)
 	else 	// if (!gameActive)
 	{ // game has not started yet
 
-		socket.emit('check_lobby_full');
+		socket.emit('check_lobby_full', roomSize);
 
-		socket.on('full_room_achieved', function(room)
+		socket.on('full_room_achieved', function()
 		{
+			console.log("client: full_room_achieved");
 			if (typeof playerArray == 'undefined')
 			{
 				playerArray = new Array();
 				stage.removeChild(lobbyText);
-				for (var i = 0; i < room.numPlayers; i++)
+				for (var i = 0; i < roomSize; i++)
 				{
 					if (i == playerID)
 					{	// initialize own player
 						player = new Player(i);
-						// player.playerID = playerID;
 						playerArray[i] = player;
 					}
 					else
-					{
+					{	// initialize opponents and place on canvas
 						var p = new Player(i);
 						playerArray[i] = p;
 					}
@@ -179,20 +179,6 @@ function tick(event)
 				createTexts();
 			}
 		});
-
-		// if(mode === "2player")// && playerNumber === 2)
-		// {
-		// 	gameActive = true;
-		// 	stage.removeChild(lobbyText);
-		// 	initialize2player();
-		// }
-			
-		// else if(mode === "4player")// && playerNumber === 4)
-		// {
-		// 	gameActive = true;
-		// 	stage.removeChild(lobbyText);
-		// 	initialize4player();
-		// }
 	}
 	stage.update();
 }
@@ -214,7 +200,7 @@ function updateBullets(serverBullets)
 		{	// if a bullet exists at this index
 			var cliBullet = bulletArray[i];
 			
-			// update bullet ƒtion
+			// update bullet location
 			cliBullet.speed = servBullet.speed;
 
 			if (cliBullet.speed == -1)
@@ -271,28 +257,6 @@ function startLobby()
 	stage.addChild(lobbyText);
 }
 
-function initialize2player()
-{	// initialize two players (the enemy is a temporary placeholder)
-	// player = new Player();
-	// first = new Enemy();
-	// enemyList.push(first);
-	// createTexts(2);
-	// stage.update();
-}
-
-function initialize4player()
-{	// initialize four players (enemies is a temporary placeholder)
-	// player = new Player();
-	// first = new Enemy();
-	// second = new Enemy();
-	// third = new Enemy();
-	// enemyList.push(first);
-	// enemyList.push(second);
-	// enemyList.push(third);
-	// createTexts(4);
-	// stage.update();
-}
-
 function createTexts()
 { // show texts to indicate health for each enemy
 
@@ -329,6 +293,7 @@ function Player(playerID)
 {	// initialize a player
 	// this.health = 100;
 
+	this.roomSize = roomSize;
 	this.deathTime = -1;
 	this.isAlive = true;
 	if (typeof playerID !== "undefined") { this.playerID = playerID; }

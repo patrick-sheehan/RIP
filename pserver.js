@@ -17,7 +17,7 @@ var bulletSpeed = 5;
 
 var BULLET_DAMAGE = 20;				//damage each bullet does. player's health starts at 100
 var BULLET_THRESHHOLD = 30;
-var TEMP_ROOM_SIZE = 2;
+// var TEMP_ROOM_SIZE = 2;
 var RESPAWN_TIME = 5000;				// milliseconds for respawn
 
 // an array of sockets to each current client/player
@@ -27,6 +27,8 @@ var playerArray = [];
 var healthArray = [];
 var bulletArray = [];
 
+
+var serverRoomSize;
 // TODO: array of rooms, where each room is an array of 4 client sockets
 
 
@@ -39,11 +41,21 @@ io.sockets.on('connection', function(client)
 	healthArray.push(100);
  	console.log("server's count incremented to: " + playerCount);
 
-	client.on('check_lobby_full', function()
+	client.on('check_lobby_full', function(roomSize)
 	{ // let client know if the room is full yet
-		if (playerCount === TEMP_ROOM_SIZE)
+		// if (playerCount === TEMP_ROOM_SIZE)
+		if (typeof serverRoomSize == 'undefined')
 		{
-			client.emit('full_room_achieved', {numPlayers: TEMP_ROOM_SIZE}); // redundant; but it succeeds to notifies the late joiner
+			if (roomSize == 2 || roomSize == 4)
+			{
+				serverRoomSize = roomSize;
+			}
+		}
+
+		if (playerCount === serverRoomSize)
+		{
+			client.emit('full_room_achieved');
+			// client.emit('full_room_achieved', {numPlayers: TEMP_ROOM_SIZE});
 		}
 	});
 
