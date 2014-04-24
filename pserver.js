@@ -198,8 +198,4 @@ function checkBulletCollision()
 // 		}
 // 	}
 // 	return totalDamage;
-<<<<<<< HEAD
 // }
-=======
-// }
->>>>>>> FETCH_HEAD
